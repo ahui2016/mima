@@ -22,7 +22,7 @@ CREATE EXTENSION pgcrypto;
 
 ```
 DATABASE_URL=postgres://mimauser:abc@localhost/mimadb
-ROCKET_DATABASES={db_todo={url="postgres://mimauser:abc@localhost/mimadb"}}
+ROCKET_DATABASES={mimadb={url="postgres://mimauser:abc@localhost/mimadb"}}
 ```
 
 ## 执行 `diesel setup`
