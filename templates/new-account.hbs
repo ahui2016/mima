@@ -1,0 +1,20 @@
+{{#*inline "title"}}New Account - Mima{{/inline}}
+
+{{#*inline "page"}}
+<h1>Mima .. New Account</h1>
+<p>Welcome to Mima!</p>
+<p>It's a password manager using Rust, Rocket, Diesel and PostgreSQL.</p>
+<hr />
+
+{{#if msg}}
+  <p>Flash Message: {{msg}}</p>
+{{/if}}
+
+<p>Input a new password to create a new account.</p>
+<form action="/new-account" method="post" autocomplete="off">
+<label for="passowrd">New Password:</label>
+  <input type="text" name="password" class="Fields" autofocus required />
+<input type="submit" value="Submit"/>
+</form>
+{{/inline}}
+{{~> layout~}}
