@@ -1,20 +1,21 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE allmima (
-    id          UUID            PRIMARY KEY,
+    id          varchar(32)     PRIMARY KEY,
     title       varchar(128)    NOT NULL DEFAULT '',
     username    varchar(128)    NOT NULL DEFAULT '',
     password    bytea,
     notes       bytea,
     favorite    boolean         NOT NULL DEFAULT 'f',
-    created     timestamp       NOT NULL,
-    deleted     timestamp       NOT NULL DEFAULT 'epoch',
+    created     varchar(20)     NOT NULL CHECK(char_length(created) = 20),
+    deleted     varchar(20)     NOT NULL DEFAULT '1970-01-01T00:00:00Z'
+                                CHECK(char_length(created) = 20),
     UNIQUE(title, username, deleted)
 );
 
 CREATE TABLE history (
-    id          UUID            PRIMARY KEY,
-    mima_id     UUID            NOT NULL
+    id          varchar(32)     PRIMARY KEY,
+    mima_id     varchar(32)     NOT NULL
                                 REFERENCES allmima(id) ON DELETE CASCADE,
     title       varchar(128)    NOT NULL DEFAULT '',
     username    varchar(128)    NOT NULL DEFAULT '',

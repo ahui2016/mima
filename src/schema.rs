@@ -1,20 +1,20 @@
 table! {
     allmima (id) {
-        id -> Uuid,
+        id -> Varchar,
         title -> Varchar,
         username -> Varchar,
         password -> Nullable<Bytea>,
         notes -> Nullable<Bytea>,
         favorite -> Bool,
-        created -> Timestamp,
-        deleted -> Timestamp,
+        created -> Varchar,
+        deleted -> Varchar,
     }
 }
 
 table! {
     history (id) {
-        id -> Uuid,
-        mima_id -> Uuid,
+        id -> Varchar,
+        mima_id -> Varchar,
         title -> Varchar,
         username -> Varchar,
         password -> Nullable<Bytea>,
