@@ -4,17 +4,20 @@
 <h1>Mima .. New Account</h1>
 <p>Welcome to Mima!</p>
 <p>It's a password manager using Rust, Rocket, Diesel and PostgreSQL.</p>
+<p>这是一个密码管理器，采用技术：Rust, Rocket, Diesel, PostgreSQL。</p>
 <hr />
 
 {{#if msg}}
-  <p>Flash Message: {{msg}}</p>
+  <p><b>{{msg}}</b></p>
 {{/if}}
 
 <p>Input a new password to create a new account.</p>
+<p>请输入一个新密码，即可建立一个新账户。</p>
 <form action="/new-account" method="post" autocomplete="off">
 <label for="passowrd">New Password:</label>
   <input type="text" name="password" class="Fields" autofocus required />
 <input type="submit" value="Submit"/>
 </form>
+
 {{/inline}}
 {{~> layout~}}

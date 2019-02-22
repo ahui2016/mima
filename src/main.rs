@@ -14,7 +14,6 @@ extern crate dotenv;
 extern crate uuid;
 // extern crate time;
 
-use std::borrow::BorrowMut;
 use std::env;
 use std::sync::Mutex;
 
@@ -35,9 +34,11 @@ mod schema;
 use schema::allmima;
 
 const EPOCH: &str = "1970-01-01T00:00:00Z";
-static PASSWORD: &'static str = "abcabc";
+// static EPOCH_UTC: DateTime<Utc> = DateTime::parse_from_rfc3339(EPOCH)
+//     .unwrap()
+//     .with_timezone(&Utc);
 sql_function!(pgp_sym_encrypt, T_pgp_sym_encrypt, (x: Text, y:Text) -> Nullable<Binary>);
-sql_function!(pgp_sym_decrypt, T_pgp_sym_decrypt, (x: Binary, y:Text) -> Text);
+sql_function!(pgp_sym_decrypt, T_pgp_sym_decrypt, (x: Nullable<Binary>, y:Text) -> Text);
 
 #[database("mimadb")]
 pub struct DbConn(diesel::PgConnection);
@@ -55,7 +56,7 @@ fn main() {
     let password_state = Login {
         password: Mutex::new(String::new()),
         datetime: Mutex::new(Utc::now()),
-        period: Duration::minutes(30), // the default life of the password
+        period: Duration::minutes(30), // 默认有效时长
     };
 
     rocket::ignite()
@@ -63,7 +64,16 @@ fn main() {
         .attach(LoginFairing)
         .mount(
             "/",
-            routes![new_account, create_account, get_password, change_password],
+            routes![
+                new_account,
+                create_account,
+                login_page,
+                login,
+                timeout,
+                logged_in,
+                get_password,
+                change_password
+            ],
         )
         .attach(Template::fairing())
         .manage(password_state)
@@ -74,39 +84,93 @@ fn main() {
 fn new_account(flash: Option<FlashMessage>) -> Template {
     let context = match flash {
         Some(ref f) => TemplateContext { msg: Some(f.msg()) },
-        None => TemplateContext {
-            msg: Some("no flash"),
-        },
+        None => TemplateContext { msg: None },
     };
     Template::render("new-account", &context)
 }
+
 #[post("/new-account", data = "<form>")]
-fn create_account(form: Form<NewAccount>, state: State<Login>, conn: DbConn) -> Flash<Redirect> {
+fn create_account(form: Form<LoginForm>, conn: DbConn) -> Flash<Redirect> {
     if form.password.is_empty() {
-        return Flash::error(Redirect::to(uri!(new_account)), "password cannot be empty.");
+        return Flash::error(Redirect::to(uri!(new_account)), "密码不能为空。");
     }
     diesel::insert_into(allmima::table)
         .values((
             allmima::id.eq(Uuid::new_v4().to_simple().to_string()),
-            allmima::password.eq(pgp_sym_encrypt("TODO: random password here", PASSWORD)),
+            allmima::password.eq(pgp_sym_encrypt(
+                "TODO: random password here",
+                form.password.to_owned(),
+            )),
             allmima::created.eq(Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)),
         ))
         .execute(&conn as &PgConnection)
         .unwrap();
 
-    let mut pwd = state.password.lock().unwrap();
-    *pwd = form.password.to_owned();
-    let mut dt = state.datetime.lock().unwrap();
-    *dt = Utc::now();
-    Flash::success(Redirect::to(uri!(get_password)), "")
+    Flash::success(
+        Redirect::to(uri!(login_page)),
+        "创建新账户成功！请登入。",
+    )
+}
+
+#[get("/login")]
+fn login_page(flash: Option<FlashMessage>) -> Template {
+    let context = match flash {
+        Some(ref f) => TemplateContext { msg: Some(f.msg()) },
+        None => TemplateContext { msg: None },
+    };
+    Template::render("login", &context)
+}
+
+#[post("/login", data = "<form>")]
+fn login(form: Form<LoginForm>, login: State<Login>, conn: DbConn) -> Flash<Redirect> {
+    let pwd = form.password.to_owned();
+    let result = allmima::table
+        .filter(allmima::title.eq("").and(allmima::username.eq("")))
+        .select(pgp_sym_decrypt(allmima::password, &pwd))
+        .get_result::<String>(&conn as &PgConnection);
+    match result {
+        Ok(decrypted) => {
+            let mut l_pwd = login.password.lock().unwrap();
+            let mut dt = login.datetime.lock().unwrap();
+            *l_pwd = pwd;
+            *dt = Utc::now();
+            Flash::success(Redirect::to(uri!(get_password)), decrypted)
+        }
+        Err(err) => {
+            let err_info = format!("{}", err);
+            if err_info.contains("Wrong key or corrupt data") {
+                return Flash::error(Redirect::to(uri!(login_page)), "密码错误。");
+            }
+            panic!(err)
+        }
+    }
+}
+
+#[get("/timeout")]
+fn timeout() -> Template {
+    Template::render("timeout", "")
+}
+
+#[get("/logged-in")]
+fn logged_in() -> Template {
+    Template::render("logged-in", "")
 }
 
 #[get("/get-password")]
-fn get_password(_flash: Option<FlashMessage>, state: State<Login>) -> String {
+fn get_password(flash: Option<FlashMessage>, state: State<Login>) -> String {
+    let msg = match flash {
+        Some(ref f) => f.msg(),
+        None => "No flash message.",
+    };
     format!(
-        "Password is {}\n生效时间：{}",
+        "Flash: {}\nPassword is {}\n生效时间：{}",
+        msg,
         state.password.lock().unwrap(),
-        state.datetime.lock().unwrap().to_rfc3339_opts(SecondsFormat::Secs, true),
+        state
+            .datetime
+            .lock()
+            .unwrap()
+            .to_rfc3339_opts(SecondsFormat::Secs, true),
     )
 }
 
@@ -127,28 +191,54 @@ impl Fairing for LoginFairing {
     }
     fn on_request(&self, request: &mut Request, _: &Data) {
         let conn = request.guard::<DbConn>().unwrap();
-        //         let database_url = env::var("DATABASE_URL").unwrap();
-        //         let conn = PgConnection::establish(&database_url).unwrap();
         let result = allmima::table
             .select(allmima::id)
             .first::<String>(&conn as &PgConnection);
-        if result.is_err() && result.unwrap_err() == diesel::NotFound {
-            if request.uri().path() == "/new-account" {
-                return;
+
+        match result {
+            Err(err) => {
+                if err != diesel::NotFound {
+                    panic!(err);
+                }
+                // Not Found (数据表为空，需要创建新账户。)
+                if request.uri().path() == "/new-account" {
+                    return;
+                }
+                request.set_method(Method::Get);
+                request.set_uri(Origin::parse("/new-account").unwrap());
             }
-            request.set_method(Method::Get);
-            request.set_uri(Origin::parse("/new-account").unwrap());
-        } else {
-            request.set_uri(Origin::parse("/get-password").unwrap());
-        }
-        //         let password = allmima
-        //             .filter(
-        //                 allmima::title
-        //                     .eq("")
-        //                     .and(allmima::username.eq("")),
-        //             )
-        //             .select(pgp_sym_decrypt(allmima::password, PASSWORD))
-        //             .get_result();
+            Ok(_) => {
+                let login = request.guard::<State<Login>>().unwrap();
+                let pwd = login.password.lock().unwrap();
+                let dt = login.datetime.lock().unwrap();
+                let expired = *dt + login.period;
+                if pwd.is_empty() {
+                    if request.uri().path() == "/login" {
+                        return;
+                    }
+                    request.set_method(Method::Get);
+                    request.set_uri(Origin::parse("/login").unwrap());
+                    return;
+                }
+                if Utc::now() > expired {
+                    if request.uri().path() == "/login" {
+                        return;
+                    }
+                    request.set_method(Method::Get);
+                    request.set_uri(Origin::parse("/timeout").unwrap());
+                    return;
+                }
+                // Logged in successfully.
+                if vec!["/login", "/new-account", "/timeout"]
+                    .iter()
+                    .find(|&&x| x == request.uri().path())
+                    .is_some()
+                {
+                    request.set_method(Method::Get);
+                    request.set_uri(Origin::parse("/logged-in").unwrap());
+                }
+            }
+        };
     }
 }
 
@@ -170,7 +260,7 @@ impl Fairing for LoginFairing {
 // }
 
 #[derive(FromForm)]
-struct NewAccount {
+struct LoginForm {
     pub password: String,
 }
 

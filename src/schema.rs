@@ -24,7 +24,4 @@ table! {
 
 joinable!(history -> allmima (mima_id));
 
-allow_tables_to_appear_in_same_query!(
-    allmima,
-    history,
-);
+allow_tables_to_appear_in_same_query!(allmima, history,);

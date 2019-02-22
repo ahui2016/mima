@@ -1,0 +1,18 @@
+{{#*inline "title"}}Login - Mima{{/inline}}
+
+{{#*inline "page"}}
+<h1>Mima .. Login</h1>
+<hr />
+
+{{#if msg}}
+  <p><b>{{msg}}</b></p>
+{{/if}}
+
+<form action="/login" method="post" autocomplete="off">
+<label for="passowrd">Password:</label>
+  <input type="password" name="password" class="Fields" autofocus required />
+<input type="submit" value="Submit"/>
+</form>
+
+{{/inline}}
+{{~> layout~}}
