@@ -1,0 +1,39 @@
+{% extends "base" %}
+
+{% block title %}Add - Mima{% endblock title %}
+
+{% block body %}
+<h1><a href="/">Mima</a> .. Add</h1>
+<hr />
+
+<p><br /></p>
+
+{% if msg %}
+  <p class="FlashMessage">{{msg}}</p>
+{% endif %}
+
+<form action="/add" method="POST" autocomplete="off">
+  <label for="title">Title:</label>
+    <input type="text" name="title" id="title" class="Fields" autofocus required
+           onblur="this.value = this.value.trim()" />
+  <label for="username">Username:</label>
+    <input type="text" name="username" id="username" class="Fields"
+           onblur="this.value = this.value.trim()" />
+  <label for="password">Password: (<a href="#" onclick="generatePW()">generate</a>)</label>
+    <input type="text" name="password" id="password" class="Fields" />
+  <label for="notes">Notes:</label>
+    <textarea name="notes" id="notes" class="Fields">{% if form_data %}{{form_data.notes}}{% endif %}</textarea>
+  <p>
+    <input type="submit" value="Submit" />
+  </p>
+</form>
+
+{%if form_data %}
+<script type="text/javascript">
+document.getElementById('title').value = '{{form_data.title | safe | addslashes}}'
+document.getElementById('username').value = '{{form_data.username | safe | addslashes}}'
+document.getElementById('password').value = ''
+</script>
+{% endif %}
+
+{% endblock body %}
