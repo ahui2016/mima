@@ -88,7 +88,7 @@ fn new_account(flash: Option<FlashMessage>) -> Template {
         Some(ref f) => Some(f.msg()),
         None => None,
     };
-    Template::render("new-account", &FlashContext{ msg })
+    Template::render("new-account", &FlashContext { msg })
 }
 
 #[post("/new-account", data = "<form>")]
@@ -199,13 +199,11 @@ fn add(
             allmima::id.eq(Uuid::new_v4().to_simple().to_string()),
             allmima::title.eq(&form_data.title),
             allmima::username.eq(&form_data.username),
-            allmima::password.eq(pgp_sym_encrypt(&form_data.password, &pwd)),
-            allmima::notes.eq(pgp_sym_encrypt(&form_data.notes, &pwd)),
             allmima::created.eq(Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)),
         ))
         .execute(&conn as &PgConnection);
 
-    match result {
+    let resp = match result {
         Err(err) => {
             let err_info = format!("{}", err);
             if !err_info.contains("allmima_title_username_deleted_key") {
@@ -220,7 +218,21 @@ fn add(
             ))
         }
         Ok(_) => Ok(Flash::success(Redirect::to(uri!(get_password)), "ok")),
+    };
+
+    if !form_data.password.is_empty() {
+        diesel::insert_into(allmima::table)
+            .values(allmima::password.eq(pgp_sym_encrypt(&form_data.password, &pwd)))
+            .execute(&conn as &PgConnection)
+            .unwrap();
     }
+    if !form_data.notes.is_empty() {
+        diesel::insert_into(allmima::table)
+            .values(allmima::notes.eq(pgp_sym_encrypt(&form_data.notes, &pwd)))
+            .execute(&conn as &PgConnection)
+            .unwrap();
+    }
+    resp
 }
 
 #[get("/get-password")]
