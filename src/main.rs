@@ -15,6 +15,7 @@ extern crate uuid;
 // extern crate time;
 
 use std::env;
+use std::str;
 use std::sync::Mutex;
 
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
@@ -176,34 +177,23 @@ fn add(
     state: State<Login>,
     conn: DbConn,
 ) -> Result<Flash<Redirect>, Template> {
-    let form_data = AddForm {
-        title: form.title.trim().into(),
-        username: form.username.trim().into(),
-        password: form.password.to_owned(),
-        notes: form.notes.trim().into(),
-    };
+    let form_data = MimaItem::from_add_form(form.into_inner());
 
     if form_data.title.is_empty() {
         return Err(Template::render(
             "add",
             &AddContext {
                 msg: Some("title不能为空。"),
-                form_data: Some(&form_data),
+                form_data: Some(&form_data.to_add_form()),
             },
         ));
     }
 
-    let pwd = state.password.lock().unwrap().clone();
-    let result = diesel::insert_into(allmima::table)
-        .values((
-            allmima::id.eq(Uuid::new_v4().to_simple().to_string()),
-            allmima::title.eq(&form_data.title),
-            allmima::username.eq(&form_data.username),
-            allmima::created.eq(Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)),
-        ))
-        .execute(&conn as &PgConnection);
+    let pwd = state.password.lock().unwrap();
 
-    let resp = match result {
+    let result = form_data.insert(&conn, &pwd);
+
+    match result {
         Err(err) => {
             let err_info = format!("{}", err);
             if !err_info.contains("allmima_title_username_deleted_key") {
@@ -213,26 +203,12 @@ fn add(
                 "add",
                 &AddContext {
                     msg: Some("冲突：数据库中已有相同的 title, username。"),
-                    form_data: Some(&form_data),
+                    form_data: Some(&form_data.to_add_form()),
                 },
             ))
         }
         Ok(_) => Ok(Flash::success(Redirect::to(uri!(get_password)), "ok")),
-    };
-
-    if !form_data.password.is_empty() {
-        diesel::insert_into(allmima::table)
-            .values(allmima::password.eq(pgp_sym_encrypt(&form_data.password, &pwd)))
-            .execute(&conn as &PgConnection)
-            .unwrap();
     }
-    if !form_data.notes.is_empty() {
-        diesel::insert_into(allmima::table)
-            .values(allmima::notes.eq(pgp_sym_encrypt(&form_data.notes, &pwd)))
-            .execute(&conn as &PgConnection)
-            .unwrap();
-    }
-    resp
 }
 
 #[get("/get-password")]
@@ -325,22 +301,84 @@ impl Fairing for LoginFairing {
     }
 }
 
-// #[derive(Serialize, Insertable, Queryable, Debug, Clone)]
-// pub struct Mima {
-//     pub id: String,
-//     pub title: String,
-//     pub username: String,
-//     pub passowrd: Option<Vec<u8>>,
-//     pub notes: Option<Vec<u8>>,
-//     pub favorite: bool,
-//     pub created: String,
-//     pub deleted: String,
-// }
+#[table_name = "allmima"]
+#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone)]
+pub struct MimaItem {
+    pub id: String,
+    pub title: String,
+    pub username: String,
+    pub password: Option<Vec<u8>>,
+    pub notes: Option<Vec<u8>>,
+    pub favorite: bool,
+    pub created: String,
+    pub deleted: String,
+}
 
-// #[derive(Serialize)]
-// struct FlashContext {
-//     parent: &'static str,
-// }
+impl MimaItem {
+    fn from_add_form(form: AddForm) -> MimaItem {
+        let password = match form.password.is_empty() {
+            true => None,
+            false => Some(form.password.into_bytes()),
+        };
+        let notes = form.notes.trim();
+        let notes = match notes.is_empty() {
+            true => None,
+            false => Some(notes.as_bytes().to_owned()),
+        };
+        MimaItem {
+            id: Uuid::new_v4().to_simple().to_string(),
+            title: form.title.trim().into(),
+            username: form.username.trim().into(),
+            password,
+            notes,
+            favorite: false,
+            created: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+            deleted: EPOCH.into(),
+        }
+    }
+
+    fn to_add_form(&self) -> AddForm {
+        AddForm {
+            title: self.title.clone(),
+            username: self.username.clone(),
+            password: String::new(),
+            notes: self.str_notes().to_string(),
+        }
+    }
+
+    fn str_password(&self) -> &str {
+        match self.password.as_ref() {
+            Some(vec) => str::from_utf8(vec).unwrap(),
+            None => "",
+        }
+    }
+
+    fn str_notes(&self) -> &str {
+        match self.notes {
+            Some(ref vec) => str::from_utf8(vec).unwrap(),
+            None => "",
+        }
+    }
+
+    fn insert(&self, conn: &PgConnection, pwd: &str) -> diesel::result::QueryResult<usize> {
+        let result = diesel::insert_into(allmima::table)
+            .values(self)
+            .execute(conn);
+        if self.password.is_some() {
+            diesel::update(self)
+                .set(allmima::password.eq(pgp_sym_encrypt(self.str_password(), pwd)))
+                .execute(conn)
+                .unwrap();
+        }
+        if self.notes.is_some() {
+            diesel::update(self)
+                .set(allmima::notes.eq(pgp_sym_encrypt(self.str_notes(), pwd)))
+                .execute(conn)
+                .unwrap();
+        }
+        result
+    }
+}
 
 #[derive(FromForm)]
 struct LoginForm {
