@@ -84,11 +84,11 @@ fn main() {
 
 #[get("/new-account")]
 fn new_account(flash: Option<FlashMessage>) -> Template {
-    let context = match flash {
-        Some(ref f) => TemplateContext { msg: Some(f.msg()) },
-        None => TemplateContext { msg: None },
+    let msg = match flash {
+        Some(ref f) => Some(f.msg()),
+        None => None,
     };
-    Template::render("new-account", &context)
+    Template::render("new-account", &FlashContext{ msg })
 }
 
 #[post("/new-account", data = "<form>")]
@@ -117,8 +117,8 @@ fn create_account(form: Form<LoginForm>, conn: DbConn) -> Flash<Redirect> {
 #[get("/login")]
 fn login_page(flash: Option<FlashMessage>) -> Template {
     let context = match flash {
-        Some(ref f) => TemplateContext { msg: Some(f.msg()) },
-        None => TemplateContext { msg: None },
+        Some(ref f) => FlashContext { msg: Some(f.msg()) },
+        None => FlashContext { msg: None },
     };
     Template::render("login", &context)
 }
@@ -157,12 +157,12 @@ fn logout(state: State<Login>) -> Flash<Redirect> {
 
 #[get("/timeout")]
 fn timeout() -> Template {
-    Template::render("timeout", "")
+    Template::render("timeout", FlashContext::new())
 }
 
 #[get("/logged-in")]
 fn logged_in() -> Template {
-    Template::render("logged-in", "")
+    Template::render("logged-in", FlashContext::new())
 }
 
 #[get("/add")]
@@ -187,7 +187,7 @@ fn add(
         return Err(Template::render(
             "add",
             &AddContext {
-                msg: Some("title不能为空。".into()),
+                msg: Some("title不能为空。"),
                 form_data: Some(&form_data),
             },
         ));
@@ -214,7 +214,7 @@ fn add(
             Err(Template::render(
                 "add",
                 &AddContext {
-                    msg: Some("冲突：数据库中已有相同的 title, username。".into()),
+                    msg: Some("冲突：数据库中已有相同的 title, username。"),
                     form_data: Some(&form_data),
                 },
             ))
@@ -326,7 +326,7 @@ impl Fairing for LoginFairing {
 // }
 
 // #[derive(Serialize)]
-// struct TemplateContext {
+// struct FlashContext {
 //     parent: &'static str,
 // }
 
@@ -336,8 +336,13 @@ struct LoginForm {
 }
 
 #[derive(Debug, Serialize)]
-struct TemplateContext<'a> {
+struct FlashContext<'a> {
     msg: Option<&'a str>,
+}
+impl<'a> FlashContext<'a> {
+    fn new() -> FlashContext<'a> {
+        FlashContext { msg: None }
+    }
 }
 
 #[derive(FromForm, Serialize)]
@@ -349,12 +354,12 @@ pub struct AddForm {
 }
 
 #[derive(Serialize)]
-struct AddContext<'a> {
-    msg: Option<String>,
-    form_data: Option<&'a AddForm>,
+struct AddContext<'a, 'b> {
+    msg: Option<&'a str>,
+    form_data: Option<&'b AddForm>,
 }
-impl<'a> AddContext<'a> {
-    fn new() -> AddContext<'a> {
+impl<'a, 'b> AddContext<'a, 'b> {
+    fn new() -> AddContext<'a, 'b> {
         AddContext {
             msg: None,
             form_data: None,

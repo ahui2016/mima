@@ -1,15 +1,18 @@
-{{#*inline "title"}}New Account - Mima{{/inline}}
+{% extends "base" %}
 
-{{#*inline "page"}}
+{% block title %}New Account - Mima{% endblock title %}
+
+{% block body %}
+
 <h1>Mima .. New Account</h1>
 <p>Welcome to Mima!</p>
 <p>It's a password manager using Rust, Rocket, Diesel and PostgreSQL.</p>
 <p>这是一个密码管理器，采用技术：Rust, Rocket, Diesel, PostgreSQL。</p>
 <hr />
 
-{{#if msg}}
+{% if msg %}
   <p class="FlashMessage">{{msg}}</p>
-{{/if}}
+{% endif %}
 
 <p>Input a new password to create a new account.</p>
 <p>请输入一个新密码，即可建立一个新账户。</p>
@@ -19,5 +22,4 @@
 <input type="submit" value="Submit"/>
 </form>
 
-{{/inline}}
-{{~> layout~}}
+{% endblock body %}

@@ -1,11 +1,13 @@
-{{#*inline "title"}}Timeout - Mima{{/inline}}
+{% extends "base" %}
 
-{{#*inline "page"}}
+{% block title %}Timeout - Mima{% endblock title %}
+
+{% block body %}
+
 <h1>Mima .. Timeout</h1>
 <hr />
 
 <p>为了确保数据安全，本程序具有超时自动关闭功能。</p>
 <p>请重新登入：<a href="/login">Login</a></p>
 
-{{/inline}}
-{{~> layout~}}
+{% endblock body %}

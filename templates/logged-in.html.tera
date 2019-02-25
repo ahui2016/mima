@@ -1,10 +1,12 @@
-{{#*inline "title"}}Logged in - Mima{{/inline}}
+{% extends "base" %}
 
-{{#*inline "page"}}
+{% block title %}Logged in - Mima{% endblock title %}
+
+
+{% block body %}
 <h1>Mima .. Logged in</h1>
 <hr />
 
 <p class="FlashMessage">目前状态：非新账户，已成功登入，未超时。</p>
 
-{{/inline}}
-{{~> layout~}}
+{% endblock body %}

@@ -31,6 +31,8 @@ ROCKET_DATABASES={mimadb={url="postgres://mimauser:abc@localhost/mimadb"}}
 
 ## 在文件 up.sql 和 down.sql 中输入内容。
 
+相关内容可在 `migrations` 文件夹中找到。
+
 ## 执行 `diesel migration run`
 
 ## 至此，所需的数据表也已准备完毕。关于数据库的一切准备工作已完成。

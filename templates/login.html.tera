@@ -1,12 +1,15 @@
-{{#*inline "title"}}Login - Mima{{/inline}}
+{% extends "base" %}
 
-{{#*inline "page"}}
+{% block title %}Login - Mima{% endblock title %}
+
+{% block body %}
+
 <h1>Mima .. Login</h1>
 <hr />
 
-{{#if msg}}
+{% if msg %}
   <p class="FlashMessage">{{msg}}</p>
-{{/if}}
+{% endif %}
 
 <form action="/login" method="post" autocomplete="off">
 <label for="passowrd">Password:</label>
@@ -14,5 +17,4 @@
 <input type="submit" value="Submit"/>
 </form>
 
-{{/inline}}
-{{~> layout~}}
+{% endblock body %}
