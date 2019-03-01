@@ -16,6 +16,7 @@ chrono = "0.4"
 time = "0.1"
 uuid = { version = "0.7", features = ["v4"] }
 sodiumoxide = "0.2.0"
+base64 = "0.10.1"
 
 [dependencies.rocket_contrib]
 version = "0.4.0"

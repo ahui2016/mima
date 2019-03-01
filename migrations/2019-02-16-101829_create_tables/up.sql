@@ -5,7 +5,9 @@ CREATE TABLE allmima (
     title       varchar(128)    NOT NULL DEFAULT '',
     username    varchar(128)    NOT NULL DEFAULT '',
     password    bytea,
+    p_nonce     bytea,
     notes       bytea,
+    n_nonce     bytea,
     favorite    boolean         NOT NULL DEFAULT 'f',
     created     varchar(20)     NOT NULL CHECK(char_length(created) = 20),
     deleted     varchar(20)     NOT NULL DEFAULT '1970-01-01T00:00:00Z'
@@ -20,5 +22,7 @@ CREATE TABLE history (
     title       varchar(128)    NOT NULL DEFAULT '',
     username    varchar(128)    NOT NULL DEFAULT '',
     password    bytea,
-    notes       bytea
+    p_nonce     bytea,
+    notes       bytea,
+    n_nonce     bytea
 );

@@ -1,5 +1,4 @@
 #![feature(proc_macro_hygiene, decl_macro)]
-// #![deny(missing_docs)]
 
 //! - It's a password manager using Rust, Rocket, Diesel and PostgreSQL.
 //! - 这是一个密码管理器，采用技术：Rust, Rocket, Diesel, PostgreSQL。
@@ -20,10 +19,11 @@ extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
 
+extern crate base64;
 extern crate chrono;
 extern crate dotenv;
-extern crate uuid;
 extern crate sodiumoxide;
+extern crate uuid;
 
 use std::env;
 use std::str;
@@ -39,6 +39,8 @@ use rocket::request::{FlashMessage, Form};
 use rocket::response::{Flash, Redirect};
 use rocket::{Data, Request, State};
 use rocket_contrib::templates::Template;
+use sodiumoxide::crypto::hash::sha256;
+use sodiumoxide::crypto::secretbox;
 use uuid::Uuid;
 
 mod schema;
@@ -58,7 +60,7 @@ pub struct DbConn(diesel::PgConnection);
 /// - 每一个请求进来时, 都通过 `LoginFairing` 检查 `Login` 的状态 (如: 密码是否为空, 有没有超时).
 /// - 在 `main` 中对 `Login` 进行初始化.
 struct Login {
-    password: Mutex<String>,
+    key: Mutex<secretbox::Key>,
     datetime: Mutex<DateTime<Utc>>,
     period: Duration, // datetime + period == expired time
 }
@@ -68,10 +70,12 @@ fn main() {
     let _rocket_databases = env::var("ROCKET_DATABASES").expect("ROCKET_DATABASES must be set");
 
     let password_state = Login {
-        password: Mutex::new(String::new()),
+        key: Mutex::new(secretbox::Key::new()),
         datetime: Mutex::new(Utc::now()),
         period: Duration::minutes(30), // 默认有效时长
     };
+
+    sodiumoxide::init().unwrap();
 
     rocket::ignite()
         .attach(DbConn::fairing())
@@ -89,7 +93,6 @@ fn main() {
                 add_page,
                 add,
                 get_password,
-                change_password
             ],
         )
         .attach(Template::fairing())
@@ -113,13 +116,14 @@ fn create_account(form: Form<LoginForm>, conn: DbConn) -> Flash<Redirect> {
     if form.password.is_empty() {
         return Flash::error(Redirect::to(uri!(new_account)), "密码不能为空。");
     }
+    let pwd = sha256::hash(&form.password.as_bytes());
+    let pwd = secretbox::Key::from_slice(pwd.as_ref()).unwrap();
+    let p_nonce = secretbox::gen_nonce();
     diesel::insert_into(allmima::table)
         .values((
             allmima::id.eq(Uuid::new_v4().to_simple().to_string()),
-            allmima::password.eq(pgp_sym_encrypt(
-                "TODO: random password here",
-                form.password.to_owned(),
-            )),
+            allmima::password.eq(secretbox::seal(b"TODO: random text here.", &p_nonce, &pwd)),
+            allmima::p_nonce.eq(p_nonce.as_ref()),
             allmima::created.eq(Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)),
         ))
         .execute(&conn as &PgConnection)
@@ -144,26 +148,29 @@ fn login_page(flash: Option<FlashMessage>) -> Template {
 /// **POST** 登入, 服务器端处理.
 #[post("/login", data = "<form>")]
 fn login(form: Form<LoginForm>, state: State<Login>, conn: DbConn) -> Flash<Redirect> {
-    let pwd = form.password.to_owned();
-    let result = allmima::table
+    let pwd = sha256::hash(&form.password.as_bytes());
+    let pwd = secretbox::Key::from_slice(pwd.as_ref()).unwrap();
+    let (encrypted, p_nonce) = allmima::table
         .filter(allmima::title.eq("").and(allmima::username.eq("")))
-        .select(pgp_sym_decrypt(allmima::password, &pwd))
-        .get_result::<String>(&conn as &PgConnection);
-    match result {
-        Ok(decrypted) => {
-            let mut l_pwd = state.password.lock().unwrap();
+        .select((allmima::password, allmima::p_nonce))
+        .get_result::<(Option<Vec<u8>>, Option<Vec<u8>>)>(&conn as &PgConnection)
+        .unwrap();
+    let encrypted = encrypted.unwrap();
+    let p_nonce = p_nonce.unwrap();
+    let p_nonce = secretbox::Nonce::from_slice(&p_nonce).unwrap();
+    let decrypted = secretbox::open(&encrypted, &p_nonce, &pwd);
+    match decrypted {
+        Ok(text_bytes) => {
+            let mut key = state.key.lock().unwrap();
             let mut dt = state.datetime.lock().unwrap();
-            *l_pwd = pwd;
+            *key = pwd;
             *dt = Utc::now();
-            Flash::success(Redirect::to(uri!(get_password)), decrypted)
+            Flash::success(
+                Redirect::to(uri!(get_password)),
+                str::from_utf8(&text_bytes).unwrap(),
+            )
         }
-        Err(err) => {
-            let err_info = format!("{}", err);
-            if err_info.contains("Wrong key or corrupt data") {
-                return Flash::error(Redirect::to(uri!(login_page)), "密码错误。");
-            }
-            panic!(err)
-        }
+        Err(_) => Flash::error(Redirect::to(uri!(login_page)), "解密失败。"),
     }
 }
 
@@ -212,9 +219,7 @@ fn add(
         ));
     }
 
-    let pwd = state.password.lock().unwrap();
-
-    let result = form_data.insert(&conn, &pwd);
+    let result = form_data.insert(&conn);
 
     match result {
         Err(err) => {
@@ -242,9 +247,9 @@ fn get_password(flash: Option<FlashMessage>, state: State<Login>) -> String {
         None => "No flash message.",
     };
     format!(
-        "Flash: {}\nPassword is {}\n生效时间：{}",
+        "Flash: {}\nPassword is {:?}\n生效时间：{}",
         msg,
-        state.password.lock().unwrap(),
+        state.key.lock().unwrap(),
         state
             .datetime
             .lock()
@@ -253,16 +258,8 @@ fn get_password(flash: Option<FlashMessage>, state: State<Login>) -> String {
     )
 }
 
-/// _临时使用_, 以后要删除.
-#[get("/change-password")]
-fn change_password(state: State<Login>) -> Redirect {
-    let mut pwd = state.password.lock().unwrap();
-    *pwd = "new password".to_string();
-    Redirect::to(uri!(get_password))
-}
-
 /// **中间件** Kind::Request
-/// 
+///
 /// 对于每一个请求, 检查 `Login` 的状态 (如: 密码是否为空, 有没有超时), 并跳转到相关页面.
 pub struct LoginFairing;
 impl Fairing for LoginFairing {
@@ -272,7 +269,7 @@ impl Fairing for LoginFairing {
             kind: fairing::Kind::Request,
         }
     }
-    
+
     /// 对每一个请求进行处理.
     fn on_request(&self, request: &mut Request, _: &Data) {
         if request.uri().path() == "/logout" {
@@ -284,7 +281,7 @@ impl Fairing for LoginFairing {
             .first::<String>(&conn as &PgConnection);
 
         let state = request.guard::<State<Login>>().unwrap();
-        let mut pwd = state.password.lock().unwrap();
+        let mut key = state.key.lock().unwrap();
         match result {
             Err(err) => {
                 if err != diesel::NotFound {
@@ -294,14 +291,14 @@ impl Fairing for LoginFairing {
                 if request.uri().path() == "/new-account" {
                     return;
                 }
-                *pwd = String::new();
+                *key = secretbox::Key::new();
                 request.set_method(Method::Get);
                 request.set_uri(uri!(new_account));
             }
             Ok(_) => {
                 let dt = state.datetime.lock().unwrap();
                 let expired = *dt + state.period;
-                if pwd.is_empty() {
+                if key.is_empty() {
                     if request.uri().path() == "/login" {
                         return;
                     }
@@ -339,31 +336,42 @@ pub struct MimaItem {
     pub title: String,
     pub username: String,
     pub password: Option<Vec<u8>>,
+    pub p_nonce: Option<Vec<u8>>,
     pub notes: Option<Vec<u8>>,
+    pub n_nonce: Option<Vec<u8>>,
     pub favorite: bool,
     pub created: String,
     pub deleted: String,
 }
 
 impl MimaItem {
-
     /// 用于处理 `add` 页面的表单.
+    ///
+    /// 这里调用 `Login` 的密码, 由于在登入时已验证过密码, 该密码应该正确.
     fn from_add_form(form: AddForm) -> MimaItem {
-        let password = match form.password.is_empty() {
-            true => None,
-            false => Some(form.password.into_bytes()),
+        let (password, p_nonce) = match form.password.is_empty() {
+            true => (None, None),
+            false => (
+                Some(form.password.into_bytes()), // TODO: 要加密
+                Some(secretbox::gen_nonce().as_ref().to_owned()),
+            ),
         };
         let notes = form.notes.trim();
-        let notes = match notes.is_empty() {
-            true => None,
-            false => Some(notes.as_bytes().to_owned()),
+        let (notes, n_nonce) = match notes.is_empty() {
+            true => (None, None),
+            false => (
+                Some(notes.as_bytes().to_owned()),
+                Some(secretbox::gen_nonce().as_ref().to_owned()),
+            ),
         };
         MimaItem {
             id: Uuid::new_v4().to_simple().to_string(),
             title: form.title.trim().into(),
             username: form.username.trim().into(),
             password,
+            p_nonce,
             notes,
+            n_nonce,
             favorite: false,
             created: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
             deleted: EPOCH.into(),
@@ -399,22 +407,22 @@ impl MimaItem {
     }
 
     /// 向数据库中插入一条新项目.
-    fn insert(&self, conn: &PgConnection, pwd: &str) -> diesel::result::QueryResult<usize> {
+    fn insert(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
         let result = diesel::insert_into(allmima::table)
             .values(self)
             .execute(conn);
-        if self.password.is_some() {
-            diesel::update(self)
-                .set(allmima::password.eq(pgp_sym_encrypt(self.str_password(), pwd)))
-                .execute(conn)
-                .unwrap();
-        }
-        if self.notes.is_some() {
-            diesel::update(self)
-                .set(allmima::notes.eq(pgp_sym_encrypt(self.str_notes(), pwd)))
-                .execute(conn)
-                .unwrap();
-        }
+        //         if self.password.is_some() {
+        //             diesel::update(self)
+        //                 .set(allmima::password.eq(pgp_sym_encrypt(self.str_password(), pwd)))
+        //                 .execute(conn)
+        //                 .unwrap();
+        //         }
+        //         if self.notes.is_some() {
+        //             diesel::update(self)
+        //                 .set(allmima::notes.eq(pgp_sym_encrypt(self.str_notes(), pwd)))
+        //                 .execute(conn)
+        //                 .unwrap();
+        //         }
         result
     }
 }
@@ -455,12 +463,29 @@ struct AddContext<'a, 'b> {
 }
 
 impl<'a, 'b> AddContext<'a, 'b> {
-
     /// 创建一个空的实例, 里面的 msg 和 form_data 均为 None.
     fn new() -> AddContext<'a, 'b> {
         AddContext {
             msg: None,
             form_data: None,
         }
+    }
+}
+
+/// 给 secretbox::Key 增加几个方法, 方便使用.
+trait MySecretKey {
+    fn new() -> secretbox::Key;
+    fn is_empty(&self) -> bool;
+}
+
+impl MySecretKey for secretbox::Key {
+    /// 创建一个空的 key.
+    fn new() -> secretbox::Key {
+        secretbox::Key::from_slice(&[0u8; secretbox::KEYBYTES]).unwrap()
+    }
+
+    /// 判断 key 是否为空
+    fn is_empty(&self) -> bool {
+        self == &Self::new()
     }
 }
