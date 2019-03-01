@@ -11,6 +11,9 @@
 
 ## 安装
 
+- 先参照 `create_role_and_database.md` 进行操作.
+- 由于采用了 sodiumoxide, 因此需要设定相关的环境变量 https://crates.io/crates/sodiumoxide
+
 ## 安全提示
 
 ## 特点
