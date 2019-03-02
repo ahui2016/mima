@@ -29,9 +29,8 @@ use std::env;
 use std::str;
 use std::sync::Mutex;
 
-use chrono::{DateTime, Duration, SecondsFormat, Utc};
+use chrono::{DateTime, Duration, Utc};
 use diesel::prelude::*;
-// use diesel::sql_types::{Binary, Nullable, Text};
 use dotenv::dotenv;
 use rocket::fairing::{self, Fairing};
 use rocket::http::Method;
@@ -39,20 +38,20 @@ use rocket::request::{FlashMessage, Form};
 use rocket::response::{Flash, Redirect};
 use rocket::{Data, Request, State};
 use rocket_contrib::templates::Template;
-use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::crypto::secretbox;
-use uuid::Uuid;
 
-mod schema;
+pub mod forms;
+pub mod models;
+pub mod schema;
+
+use forms::*;
+use models::*;
 use schema::allmima;
 
 const EPOCH: &str = "1970-01-01T00:00:00Z";
 // static EPOCH_UTC: DateTime<Utc> = DateTime::parse_from_rfc3339(EPOCH)
 //     .unwrap()
 //     .with_timezone(&Utc);
-
-// sql_function!(pgp_sym_encrypt, T_pgp_sym_encrypt, (x: Text, y:Text) -> Nullable<Binary>);
-// sql_function!(pgp_sym_decrypt, T_pgp_sym_decrypt, (x: Nullable<Binary>, y:Text) -> Text);
 
 #[database("mimadb")]
 pub struct DbConn(diesel::PgConnection);
@@ -257,11 +256,7 @@ fn get_password(flash: Option<FlashMessage>, state: State<Login>) -> String {
         "Flash: {}\nPassword is {:?}\n生效时间：{}",
         msg,
         state.key.lock().unwrap(),
-        state
-            .datetime
-            .lock()
-            .unwrap()
-            .to_rfc3339_opts(SecondsFormat::Secs, true),
+        state.datetime.lock().unwrap().to_rfc3339(),
     )
 }
 
@@ -336,196 +331,5 @@ impl Fairing for LoginFairing {
                 }
             }
         };
-    }
-}
-
-/// 与数据表 `allmima` 的结构一一对应.
-#[table_name = "allmima"]
-#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone)]
-pub struct MimaItem {
-    pub id: String,
-    pub title: String,
-    pub username: String,
-    pub password: Option<Vec<u8>>,
-    pub p_nonce: Option<Vec<u8>>,
-    pub notes: Option<Vec<u8>>,
-    pub n_nonce: Option<Vec<u8>>,
-    pub favorite: bool,
-    pub created: String,
-    pub deleted: String,
-}
-
-impl MimaItem {
-    /// 对 MimaItem 里的 password 或 notes 进行加密
-    fn encrypt(plaintext: &str, key: &secretbox::Key) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
-        match plaintext.is_empty() {
-            true => (None, None),
-            false => {
-                let nonce = secretbox::gen_nonce();
-                let encrypted = secretbox::seal(plaintext.as_bytes(), &nonce, key);
-                (Some(encrypted), Some(nonce.to_vec()))
-            }
-        }
-    }
-
-    /// 用于处理 `add` 页面的表单.
-    fn from_add_form(form: AddForm, key: &secretbox::Key) -> MimaItem {
-        let (password, p_nonce) = Self::encrypt(form.password.as_str(), key);
-        let (notes, n_nonce) = Self::encrypt(form.notes.trim(), key);
-        MimaItem {
-            id: uuid_simple(),
-            title: form.title.trim().into(),
-            username: form.username.trim().into(),
-            password,
-            p_nonce,
-            notes,
-            n_nonce,
-            favorite: false,
-            created: now_string(),
-            deleted: EPOCH.into(),
-        }
-    }
-
-    /// 当添加数据失败时, 为了避免用户原本输入的数据丢失, 需要向页面返回表单内容.
-    fn to_add_form(&self, key: &secretbox::Key) -> AddForm {
-        AddForm {
-            title: self.title.clone(),
-            username: self.username.clone(),
-            password: String::new(),
-            notes: self.notes_decrypt(key).to_string(),
-        }
-    }
-
-    /// 把 Some(Vec<u8>) 转换为 secretbox::Nonce
-    fn get_nonce(vec: Option<&Vec<u8>>) -> secretbox::Nonce {
-        secretbox::Nonce::from_slice(vec.unwrap()).unwrap()
-    }
-
-    /// 对 MimaItem 里的 password 或 notes 进行解密, 返回字符串.
-    ///
-    /// 如果被解密参数为 None, 则返回空字符串.
-    fn decrypt(
-        encrypted: Option<&Vec<u8>>,
-        nonce: Option<&Vec<u8>>,
-        key: &secretbox::Key,
-    ) -> String {
-        match encrypted {
-            Some(vec) => {
-                let nonce = Self::get_nonce(nonce);
-                let decrypted = secretbox::open(vec, &nonce, key).unwrap();
-                String::from_utf8(decrypted).unwrap()
-            }
-            None => String::new(),
-        }
-    }
-
-    /// 获取解密后的 MimaItem.password
-    fn pwd_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.password.as_ref(), self.p_nonce.as_ref(), key)
-    }
-
-    /// 获取解密后的 MimaItem.notes
-    fn notes_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.notes.as_ref(), self.n_nonce.as_ref(), key)
-    }
-
-    /// 向数据库中插入一条新项目.
-    fn insert(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
-        diesel::insert_into(allmima::table)
-            .values(self)
-            .execute(conn)
-    }
-}
-
-/// 创建新账户或登入时使用.
-#[derive(FromForm)]
-struct LoginForm {
-    pub password: String,
-}
-
-impl LoginForm {
-    /// 把字符串密码转换为 secretbox::Key
-    fn pwd_to_key(&self) -> secretbox::Key {
-        let pwd = sha256::hash(self.password.as_bytes());
-        secretbox::Key::from_slice(pwd.as_ref()).unwrap()
-    }
-}
-
-/// 用于向网页返回 Flash 信息.
-#[derive(Debug, Serialize)]
-struct FlashContext<'a> {
-    msg: Option<&'a str>,
-}
-
-impl<'a> FlashContext<'a> {
-    /// 创建一个空的实例, 里面的 msg 为 None.
-    fn new() -> FlashContext<'a> {
-        FlashContext { msg: None }
-    }
-}
-
-/// 与 `add` 页面的表单对应.
-#[derive(FromForm, Serialize)]
-pub struct AddForm {
-    pub title: String,
-    pub username: String,
-    pub password: String,
-    pub notes: String,
-}
-
-/// 网页模板数据, 用于 `add.html.tera`
-#[derive(Serialize)]
-struct AddContext<'a, 'b> {
-    msg: Option<&'a str>,
-    form_data: Option<&'b AddForm>,
-}
-
-impl<'a, 'b> AddContext<'a, 'b> {
-    /// 创建一个空的实例, 里面的 msg 和 form_data 均为 None.
-    fn new() -> AddContext<'a, 'b> {
-        AddContext {
-            msg: None,
-            form_data: None,
-        }
-    }
-}
-
-/// 给 secretbox::Key 增加几个方法, 方便使用.
-trait MySecretKey {
-    fn new() -> secretbox::Key;
-    fn is_empty(&self) -> bool;
-}
-
-impl MySecretKey for secretbox::Key {
-    /// 创建一个空的 key.
-    fn new() -> secretbox::Key {
-        secretbox::Key::from_slice(&[0u8; secretbox::KEYBYTES]).unwrap()
-    }
-
-    /// 判断 key 是否为空
-    fn is_empty(&self) -> bool {
-        self == &Self::new()
-    }
-}
-
-/// 当前时间的固定格式的字符串
-fn now_string() -> String {
-    Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)
-}
-
-/// simple格式的uuid
-fn uuid_simple() -> String {
-    Uuid::new_v4().to_simple().to_string()
-}
-
-/// 为了方便对 secretbox::Nonce 进行类型转换
-trait NonceToVec {
-    fn to_vec(self) -> Vec<u8>;
-}
-
-impl NonceToVec for secretbox::Nonce {
-    /// 类型转换
-    fn to_vec(self) -> Vec<u8> {
-        self.0.to_vec()
     }
 }
