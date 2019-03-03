@@ -3,9 +3,9 @@ use diesel::{self, prelude::*};
 use sodiumoxide::crypto::secretbox;
 use uuid::Uuid;
 
-use super::forms::AddForm;
+use super::forms::{AddForm, EditForm};
 use super::schema::allmima;
-use super::EPOCH;
+use super::{EPOCH, FIRST_ID};
 
 /// 与数据表 `allmima` 的结构一一对应.
 #[table_name = "allmima"]
@@ -52,6 +52,30 @@ impl MimaItem {
         }
     }
 
+    /// 返回精简的内容 (剔除了 p_nonce, n_nonce, created, deleted)
+    ///
+    /// password 和 notes 不解密, 适用于首页或搜索结果等.
+    pub fn to_simple(&self) -> EditForm {
+        let password = self
+            .password
+            .clone()
+            .map(|_| "******".into())
+            .unwrap_or_else(|| "".into());
+        // 下面 notes 与 上面 password 目的一样, 只是写法不同.
+        let notes = match self.notes {
+            Some(_) => "******".into(),
+            None => "".into(),
+        };
+        EditForm {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            username: self.username.clone(),
+            password,
+            notes,
+            favorite: self.favorite,
+        }
+    }
+
     /// 获取解密后的 MimaItem.password
     pub fn pwd_decrypt(&self, key: &secretbox::Key) -> String {
         Self::decrypt(self.password.as_ref(), self.p_nonce.as_ref(), key)
@@ -67,6 +91,18 @@ impl MimaItem {
         diesel::insert_into(allmima::table)
             .values(self)
             .execute(conn)
+    }
+
+    /// 从数据库提取全部记录, 输出时, 机密内容不解密.
+    pub fn all(conn: &PgConnection) -> Vec<EditForm> {
+        allmima::table
+            .filter(allmima::id.ne(FIRST_ID))
+            .order(allmima::id.desc())
+            .load::<MimaItem>(conn)
+            .unwrap()
+            .iter()
+            .map(MimaItem::to_simple)
+            .collect()
     }
 
     /// 把 Some(Vec<u8>) 转换为 secretbox::Nonce

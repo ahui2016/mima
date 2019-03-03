@@ -24,33 +24,33 @@ pub struct AddForm {
     pub notes: String,
 }
 
+/// 与 `Edit` 页面的表单对应, 也用于首页.
+#[derive(FromForm, Serialize)]
+pub struct EditForm {
+    pub id: String,
+    pub title: String,
+    pub username: String,
+    pub password: String,
+    pub notes: String,
+    pub favorite: bool,
+}
+
 /// 用于向网页返回 Flash 信息.
 #[derive(Debug, Serialize, Default)]
 pub struct FlashContext<'a> {
     pub msg: Option<&'a str>,
 }
-/*
-impl<'a> FlashContext<'a> {
-    /// 创建一个空的实例, 里面的 msg 为 None.
-    pub fn new() -> FlashContext<'a> {
-        FlashContext { msg: None }
-    }
-}
- */
+
 /// 网页模板数据, 用于 `add.html.tera`
 #[derive(Serialize, Default)]
 pub struct AddContext<'a, 'b> {
     pub msg: Option<&'a str>,
     pub form_data: Option<&'b AddForm>,
 }
-/*
-impl<'a, 'b> AddContext<'a, 'b> {
-    /// 创建一个空的实例, 里面的 msg 和 form_data 均为 None.
-    pub fn new() -> AddContext<'a, 'b> {
-        AddContext {
-            msg: None,
-            form_data: None,
-        }
-    }
+
+/// 向前端返回搜索结果，结果可能为空，也可能包含一条或多条数据。
+#[derive(Serialize, Default)]
+pub struct ResultContext<'a> {
+    pub msg: Option<&'a str>,
+    pub result: Vec<EditForm>,
 }
- */

@@ -53,6 +53,7 @@ use forms::*;
 use models::*;
 use schema::allmima;
 
+const FIRST_ID: &str = "00000000000000000000000000000000"; // 32 zeros.
 const EPOCH: &str = "1970-01-01T00:00:00Z";
 // static EPOCH_UTC: DateTime<Utc> = DateTime::parse_from_rfc3339(EPOCH)
 //     .unwrap()
@@ -88,6 +89,7 @@ fn main() {
         .mount(
             "/",
             routes![
+                index,
                 new_account,
                 create_account,
                 login_page,
@@ -103,6 +105,12 @@ fn main() {
         .attach(Template::fairing())
         .manage(password_state)
         .launch();
+}
+
+/// 首页
+#[get("/")]
+fn index() -> Template {
+    Template::render("index", &ResultContext::default())
 }
 
 /// 创建新用户，输入新密码的页面。
@@ -128,7 +136,7 @@ fn create_account(form: Form<LoginForm>, conn: DbConn) -> Flash<Redirect> {
 
     diesel::insert_into(allmima::table)
         .values((
-            allmima::id.eq(uuid_simple()),
+            allmima::id.eq(FIRST_ID),
             allmima::password.eq(encrypted),
             allmima::p_nonce.eq(p_nonce.as_ref()),
             allmima::created.eq(now_string()),
@@ -157,7 +165,7 @@ fn login_page(flash: Option<FlashMessage>) -> Template {
 fn login(form: Form<LoginForm>, state: State<Login>, conn: DbConn) -> Flash<Redirect> {
     let try_key = form.pwd_to_key();
     let (encrypted, p_nonce) = allmima::table
-        .filter(allmima::title.eq("").and(allmima::username.eq("")))
+        .filter(allmima::id.eq(FIRST_ID))
         .select((allmima::password, allmima::p_nonce))
         .get_result::<(Option<Vec<u8>>, Option<Vec<u8>>)>(&conn as &PgConnection)
         .unwrap();
