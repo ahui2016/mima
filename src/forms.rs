@@ -25,25 +25,25 @@ pub struct AddForm {
 }
 
 /// 用于向网页返回 Flash 信息.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 pub struct FlashContext<'a> {
     pub msg: Option<&'a str>,
 }
-
+/*
 impl<'a> FlashContext<'a> {
     /// 创建一个空的实例, 里面的 msg 为 None.
     pub fn new() -> FlashContext<'a> {
         FlashContext { msg: None }
     }
 }
-
+ */
 /// 网页模板数据, 用于 `add.html.tera`
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct AddContext<'a, 'b> {
     pub msg: Option<&'a str>,
     pub form_data: Option<&'b AddForm>,
 }
-
+/*
 impl<'a, 'b> AddContext<'a, 'b> {
     /// 创建一个空的实例, 里面的 msg 和 form_data 均为 None.
     pub fn new() -> AddContext<'a, 'b> {
@@ -53,3 +53,4 @@ impl<'a, 'b> AddContext<'a, 'b> {
         }
     }
 }
+ */

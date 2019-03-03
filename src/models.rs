@@ -94,13 +94,12 @@ impl MimaItem {
 
     /// 对 MimaItem 里的 password 或 notes 进行加密
     fn encrypt(plaintext: &str, key: &secretbox::Key) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
-        match plaintext.is_empty() {
-            true => (None, None),
-            false => {
-                let nonce = secretbox::gen_nonce();
-                let encrypted = secretbox::seal(plaintext.as_bytes(), &nonce, key);
-                (Some(encrypted), Some(nonce.to_vec()))
-            }
+        if plaintext.is_empty() {
+            (None, None)
+        } else {
+            let nonce = secretbox::gen_nonce();
+            let encrypted = secretbox::seal(plaintext.as_bytes(), &nonce, key);
+            (Some(encrypted), Some(nonce.to_vec()))
         }
     }
 }
