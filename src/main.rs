@@ -103,6 +103,8 @@ fn main() {
                 add,
                 delete_confirm,
                 mark_as_deleted,
+                delete_forever_confirm,
+                delete_forever,
                 recyclebin,
             ],
         )
@@ -164,6 +166,29 @@ fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
     Flash::success(
         Redirect::to(uri!(index)),
         "删除成功！(被删除条目已移至回收站)",
+    )
+}
+
+/// 删除彻底确认
+#[get("/deleteforever?<id>")]
+fn delete_forever_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
+    let key = state.key.lock().unwrap();
+    Template::render(
+        "deleteforever",
+        &ResultContext {
+            msg: None,
+            result: vec![MimaItem::get_by_id(&id, &conn, &key)],
+        },
+    )
+}
+
+/// **[DELETE]** 彻底删除 (不可恢复)
+#[delete("/delete", data = "<form>")]
+fn delete_forever(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
+    MimaItem::delete_forever(&form.id, &conn);
+    Flash::success(
+        Redirect::to(uri!(recyclebin)),
+        "删除成功！(彻底删除, 不可恢复)",
     )
 }
 

@@ -2,7 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="1800">
+    <!-- 为了提高安全性, 每约30分钟自动刷新一次 -->
+    <!-- 服务器端默认30分钟自动关闭, 由于这些时间都并非绝对精确, -->
+    <!-- 因此设为比30分钟稍长, 可避免刚好在服务器关闭前刷新. -->
+    <meta http-equiv="refresh" content="1818">
     <title>{% block title %}{% endblock title %}</title>
     <style type="text/css">
       body {

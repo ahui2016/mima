@@ -1,20 +1,21 @@
 {% extends "base" %}
 
-{% block title %}Delete - Mima{% endblock title %}
+{% block title %}Delete forever - Mima{% endblock title %}
 
 {% block body %}
-<h1><a href="/">Mima</a> .. Delete</h1>
+<h2><a href="/">Mima</a>
+.. <a href="/recyclebin">Recycle Bin</a> .. Delete forever</h2>
 <hr />
 
 <p><br /></p>
 
 {% set item = result[0] %}
 <form action="/delete" method="POST" autocomplete="off">
-  <input type="hidden" name="_method" value="put" />
+  <input type="hidden" name="_method" value="delete" />
   <input type="hidden" name="id" value="{{item.id}}" />
   <p style="font-weigth: bold;color: red">
-  真的要删除吗? (将会进入回收站) <input type="submit" value="Yes" />
-  | <a href="/">No</a>
+  真的要彻底删除吗? (不可恢复) <input type="submit" value="Yes" />
+  | <a href="/recyclebin">No</a>
   </p>
 </form>
 

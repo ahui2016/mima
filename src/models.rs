@@ -149,6 +149,12 @@ impl MimaItem {
             .unwrap();
     }
 
+    /// 通过 id 彻底删除一条记录 (不可恢复)
+    pub fn delete_forever(id: &str, conn: &PgConnection) {
+        let target = allmima::table.filter(allmima::id.eq(id));
+        diesel::delete(target).execute(conn).unwrap();
+    }
+
     /// 把 Some(Vec<u8>) 转换为 secretbox::Nonce
     fn get_nonce(vec: Option<&Vec<u8>>) -> secretbox::Nonce {
         secretbox::Nonce::from_slice(vec.unwrap()).unwrap()
