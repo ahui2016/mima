@@ -99,7 +99,8 @@ fn main() {
                 logged_in,
                 add_page,
                 add,
-                get_password,
+                delete_confirm,
+                mark_as_deleted,
             ],
         )
         .attach(Template::fairing())
@@ -109,8 +110,41 @@ fn main() {
 
 /// 首页
 #[get("/")]
-fn index() -> Template {
-    Template::render("index", &ResultContext::default())
+fn index(flash: Option<FlashMessage>, conn: DbConn) -> Template {
+    let msg = match flash {
+        Some(ref f) => Some(f.msg()),
+        None => None,
+    };
+    Template::render(
+        "index",
+        &ResultContext {
+            msg,
+            result: MimaItem::all(&conn),
+        },
+    )
+}
+
+/// 删除确认
+#[get("/delete?<id>")]
+fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
+    let key = state.key.lock().unwrap();
+    Template::render(
+        "delete",
+        &ResultContext {
+            msg: None,
+            result: vec!(MimaItem::get_by_id(id, &conn, &key)),
+        },
+    )
+}
+
+/// **[PUT]** 标记为删除 (修改删除实践, 移至回收站)
+#[put("/delete", data = "<form>")]
+fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
+    MimaItem::mark_as_deleted(&form.id, &conn);
+    Flash::success(
+        Redirect::to(uri!(index)),
+        "删除成功！(被删除条目已移至回收站)",
+    )    
 }
 
 /// 创建新用户，输入新密码的页面。
@@ -132,7 +166,7 @@ fn create_account(form: Form<LoginForm>, conn: DbConn) -> Flash<Redirect> {
 
     let key = form.pwd_to_key();
     let p_nonce = secretbox::gen_nonce();
-    let encrypted = secretbox::seal(b"TODO: random bytes here.", &p_nonce, &key);
+    let encrypted = secretbox::seal("机密内容".as_bytes(), &p_nonce, &key);
 
     diesel::insert_into(allmima::table)
         .values((
@@ -174,15 +208,12 @@ fn login(form: Form<LoginForm>, state: State<Login>, conn: DbConn) -> Flash<Redi
     let p_nonce = secretbox::Nonce::from_slice(&p_nonce).unwrap();
     let decrypted = secretbox::open(&encrypted, &p_nonce, &try_key);
     match decrypted {
-        Ok(text_bytes) => {
+        Ok(_) => {
             let mut key = state.key.lock().unwrap();
             let mut dt = state.datetime.lock().unwrap();
             *key = try_key;
             *dt = Utc::now();
-            Flash::success(
-                Redirect::to(uri!(get_password)),
-                str::from_utf8(&text_bytes).unwrap(),
-            )
+            Flash::success(Redirect::to(uri!(index)), "登入成功！")
         }
         Err(_) => Flash::error(Redirect::to(uri!(login_page)), "密码错误。"),
     }
@@ -254,23 +285,8 @@ fn add(
             ))
         }
         // TODO: 成功后跳转到主页
-        Ok(_) => Ok(Flash::success(Redirect::to(uri!(get_password)), "ok")),
+        Ok(_) => Ok(Flash::success(Redirect::to(uri!(index)), "添加成功！")),
     }
-}
-
-/// _临时使用_, 以后要删除.
-#[get("/get-password")]
-fn get_password(flash: Option<FlashMessage>, state: State<Login>) -> String {
-    let msg = match flash {
-        Some(ref f) => f.msg(),
-        None => "No flash message.",
-    };
-    format!(
-        "Flash: {}\nPassword is {:?}\n生效时间：{}",
-        msg,
-        state.key.lock().unwrap(),
-        state.datetime.lock().unwrap().to_rfc3339(),
-    )
 }
 
 /// **中间件** Kind::Request

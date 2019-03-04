@@ -35,6 +35,12 @@ pub struct EditForm {
     pub favorite: bool,
 }
 
+/// 只有一个 id 的表单, 用于删除等.
+#[derive(FromForm, Serialize)]
+pub struct IdForm {
+    pub id: String,
+}
+
 /// 用于向网页返回 Flash 信息.
 #[derive(Debug, Serialize, Default)]
 pub struct FlashContext<'a> {
