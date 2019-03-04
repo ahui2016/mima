@@ -75,10 +75,10 @@ impl MimaItem {
             favorite: self.favorite,
         }
     }
-    
+
     /// 返回精简的内容, 并且机密内容也解密.
     ///
-    /// 适用于编辑或删除的页面.
+    /// 适用于编辑, 删除, 回收站等页面.
     pub fn to_edit_delete(&self, key: &secretbox::Key) -> EditForm {
         EditForm {
             id: self.id.clone(),
@@ -110,8 +110,7 @@ impl MimaItem {
     /// 从数据库提取全部记录, 输出时, 机密内容不解密.
     pub fn all(conn: &PgConnection) -> Vec<EditForm> {
         allmima::table
-            .filter(allmima::id.ne(FIRST_ID)
-                .and(allmima::deleted.eq(EPOCH)))
+            .filter(allmima::id.ne(FIRST_ID).and(allmima::deleted.eq(EPOCH)))
             .order(allmima::created.desc())
             .load::<MimaItem>(conn)
             .unwrap()
@@ -119,16 +118,28 @@ impl MimaItem {
             .map(MimaItem::to_simple)
             .collect()
     }
-    
+
+    /// 从数据库中获取全部标记为已删除的记录 (用于"回收站")
+    pub fn recyclebin(conn: &PgConnection, key: &secretbox::Key) -> Vec<EditForm> {
+        allmima::table
+            .filter(allmima::id.ne(FIRST_ID).and(allmima::deleted.ne(EPOCH)))
+            .order(allmima::deleted.desc())
+            .load::<MimaItem>(conn)
+            .unwrap()
+            .iter()
+            .map(|item| item.to_edit_delete(key))
+            .collect()
+    }
+
     /// 通过 id 获取一条记录
-    pub fn get_by_id(id: String, conn: &PgConnection, key: &secretbox::Key) -> EditForm {
+    pub fn get_by_id(id: &str, conn: &PgConnection, key: &secretbox::Key) -> EditForm {
         let item = allmima::table
             .filter(allmima::id.eq(id))
             .get_result::<MimaItem>(conn)
             .unwrap();
         item.to_edit_delete(key)
     }
-    
+
     /// 通过 id 把一条记录标记为已删除
     pub fn mark_as_deleted(id: &str, conn: &PgConnection) {
         let target = allmima::table.filter(allmima::id.eq(id));

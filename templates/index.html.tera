@@ -15,7 +15,7 @@
 {% endif %}
 
 {% if result|length == 0 %}
-<p>没有内容。</p>
+<p>空空如也。</p>
 <p>可点击 <a href="/add">Add</a> 添加。</p>
 {% endif %}
 
@@ -30,7 +30,7 @@
     </span><br />
     {% if item.username %}Username: {{item.username}}{% endif %}
     {% if item.username and item.password %}, {% endif %}
-    {% if item.password %}Password:(<a href="#">copy</a>){% endif %}
+    {% if item.password %}Password: (<a href="#">copy</a>){% endif %}
     {% if item.notes %}, Notes: ******{% endif %}
   </p>
   </li>

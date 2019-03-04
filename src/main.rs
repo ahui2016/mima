@@ -33,10 +33,11 @@ use chrono::{DateTime, Duration, Utc};
 use diesel::prelude::*;
 use dotenv::dotenv;
 use rocket::fairing::{self, Fairing};
+use rocket::http::hyper::header::{CacheControl, CacheDirective};
 use rocket::http::Method;
 use rocket::request::{FlashMessage, Form};
 use rocket::response::{Flash, Redirect};
-use rocket::{Data, Request, State};
+use rocket::{Data, Request, Response, State};
 use rocket_contrib::templates::Template;
 use sodiumoxide::crypto::secretbox;
 
@@ -85,6 +86,7 @@ fn main() {
 
     rocket::ignite()
         .attach(DbConn::fairing())
+        .attach(NoCacheFairing)
         .attach(LoginFairing)
         .mount(
             "/",
@@ -101,6 +103,7 @@ fn main() {
                 add,
                 delete_confirm,
                 mark_as_deleted,
+                recyclebin,
             ],
         )
         .attach(Template::fairing())
@@ -124,6 +127,23 @@ fn index(flash: Option<FlashMessage>, conn: DbConn) -> Template {
     )
 }
 
+/// 回收站
+#[get("/recyclebin")]
+fn recyclebin(flash: Option<FlashMessage>, state: State<Login>, conn: DbConn) -> Template {
+    let key = state.key.lock().unwrap();
+    let msg = match flash {
+        Some(ref f) => Some(f.msg()),
+        None => None,
+    };
+    Template::render(
+        "recyclebin",
+        &ResultContext {
+            msg,
+            result: MimaItem::recyclebin(&conn, &key),
+        },
+    )
+}
+
 /// 删除确认
 #[get("/delete?<id>")]
 fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
@@ -132,7 +152,7 @@ fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
         "delete",
         &ResultContext {
             msg: None,
-            result: vec!(MimaItem::get_by_id(id, &conn, &key)),
+            result: vec![MimaItem::get_by_id(&id, &conn, &key)],
         },
     )
 }
@@ -144,7 +164,7 @@ fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
     Flash::success(
         Redirect::to(uri!(index)),
         "删除成功！(被删除条目已移至回收站)",
-    )    
+    )
 }
 
 /// 创建新用户，输入新密码的页面。
@@ -286,6 +306,27 @@ fn add(
         }
         // TODO: 成功后跳转到主页
         Ok(_) => Ok(Flash::success(Redirect::to(uri!(index)), "添加成功！")),
+    }
+}
+
+/// **中间件** Kind::Response
+///
+/// 对于每一个 response, 改变其 header, 使网页不可缓存.
+pub struct NoCacheFairing;
+impl Fairing for NoCacheFairing {
+    fn info(&self) -> fairing::Info {
+        fairing::Info {
+            name: "GET/Post no-cache",
+            kind: fairing::Kind::Response,
+        }
+    }
+    /// 使网页不可缓存
+    fn on_response(&self, _: &Request, response: &mut Response) {
+        response.set_header(CacheControl(vec![
+            CacheDirective::NoCache,
+            CacheDirective::NoStore,
+            CacheDirective::MustRevalidate,
+        ]));
     }
 }
 

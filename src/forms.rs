@@ -24,7 +24,7 @@ pub struct AddForm {
     pub notes: String,
 }
 
-/// 与 `Edit` 页面的表单对应, 也用于首页.
+/// 与 `Edit` 页面的表单对应, 也用于首页, 删除确认页面.
 #[derive(FromForm, Serialize)]
 pub struct EditForm {
     pub id: String,

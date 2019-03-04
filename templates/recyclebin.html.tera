@@ -1,0 +1,45 @@
+{% extends "base" %}
+
+{% block title %}Recyle Bin - Mima{% endblock title %}
+
+{% block body %}
+<h1><a href="/">Mima</a> .. Recyle Bin</h1>
+<hr />
+
+<p><br /></p>
+
+{% if msg %}
+  <p class="FlashMessage">{{msg}}</p>
+{% endif %}
+
+{% if result|length == 0 %}
+<p>空空如也。</p>
+{% endif %}
+
+<ul>
+  {% for item in result %}
+  <form action="/recover" method="POST" autocomplete="off">
+    <input type="hidden" name="_method" value="put" />
+    <input type="hidden" name="id" value="{{item.id}}" />
+    <li onmouseover="this.getElementsByTagName('span')[0].style.visibility = 'visible'"
+        onmouseout="this.getElementsByTagName('span')[0].style.visibility = 'hidden'">
+    <p>
+      <strong>{{item.title}}</strong> <span style="visibility: hidden">
+        <input type="submit" value="recover" />
+        <a id="delete" href="/deleteforever?id={{item.id}}">delete</a>
+      </span><br />
+      {% if item.username %}Username: {{item.username}}{% endif %}
+      {% if item.username and item.password %}, {% endif %}
+      {% if item.password %}Password:
+        <span style="display: none">{{item.username}}</span>
+        (<a href="#">show</a>){% endif %}
+      {% if item.notes %}, Notes:
+        <span style="display: none">{{item.notes}}</span>
+        (<a href="#">show</a>){% endif %}
+    </p>
+    </li>
+  </form>
+  {% endfor %}
+</ul>
+
+{% endblock body %}
