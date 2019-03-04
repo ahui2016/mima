@@ -75,6 +75,20 @@ impl MimaItem {
             favorite: self.favorite,
         }
     }
+    
+    /// 返回精简的内容, 并且机密内容也解密.
+    ///
+    /// 适用于编辑或删除的页面.
+    pub fn to_edit_delete(&self, key: &secretbox::Key) -> EditForm {
+        EditForm {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            username: self.username.clone(),
+            password: self.pwd_decrypt(key),
+            notes: self.notes_decrypt(key),
+            favorite: self.favorite,
+        }
+    }
 
     /// 获取解密后的 MimaItem.password
     pub fn pwd_decrypt(&self, key: &secretbox::Key) -> String {
@@ -96,13 +110,32 @@ impl MimaItem {
     /// 从数据库提取全部记录, 输出时, 机密内容不解密.
     pub fn all(conn: &PgConnection) -> Vec<EditForm> {
         allmima::table
-            .filter(allmima::id.ne(FIRST_ID))
-            .order(allmima::id.desc())
+            .filter(allmima::id.ne(FIRST_ID)
+                .and(allmima::deleted.eq(EPOCH)))
+            .order(allmima::created.desc())
             .load::<MimaItem>(conn)
             .unwrap()
             .iter()
             .map(MimaItem::to_simple)
             .collect()
+    }
+    
+    /// 通过 id 获取一条记录
+    pub fn get_by_id(id: String, conn: &PgConnection, key: &secretbox::Key) -> EditForm {
+        let item = allmima::table
+            .filter(allmima::id.eq(id))
+            .get_result::<MimaItem>(conn)
+            .unwrap();
+        item.to_edit_delete(key)
+    }
+    
+    /// 通过 id 把一条记录标记为已删除
+    pub fn mark_as_deleted(id: &str, conn: &PgConnection) {
+        let target = allmima::table.filter(allmima::id.eq(id));
+        diesel::update(target)
+            .set(allmima::deleted.eq(now_string()))
+            .execute(conn)
+            .unwrap();
     }
 
     /// 把 Some(Vec<u8>) 转换为 secretbox::Nonce
