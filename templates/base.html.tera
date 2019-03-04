@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="1800">
     <title>{% block title %}{% endblock title %}</title>
     <style type="text/css">
       body {

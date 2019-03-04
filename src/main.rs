@@ -299,7 +299,7 @@ fn add(
             Err(Template::render(
                 "add",
                 &AddContext {
-                    msg: Some("冲突：数据库中已有相同的 title, username。"),
+                    msg: Some("冲突：已有相同的 title, username。"),
                     form_data: Some(&add_form),
                 },
             ))
