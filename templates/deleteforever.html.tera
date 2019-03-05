@@ -9,20 +9,25 @@
 
 <p><br /></p>
 
-{% set item = result[0] %}
-<form action="/delete" method="POST" autocomplete="off">
-  <input type="hidden" name="_method" value="delete" />
-  <input type="hidden" name="id" value="{{item.id}}" />
-  <p style="font-weigth: bold;color: red">
-  真的要彻底删除吗? (不可恢复) <input type="submit" value="Yes" />
-  | <a href="/recyclebin">No</a>
-  </p>
-</form>
+{% if msg %}
+  <p class="FlashMessage">{{msg}}</p>
+{% endif %}
 
-<p>
-  Title: <strong>{{item.title}}</strong><br />
-  {% if item.username %}Username: {{item.username}}{% endif %}<br />
-  {% if item.notes %}Notes: {{item.notes}}{% endif %}
-</p>
+{% if result|length > 0 %}
+  {% set item = result[0] %}
+  <form action="/delete" method="POST" autocomplete="off">
+    <input type="hidden" name="_method" value="delete" />
+    <input type="hidden" name="id" value="{{item.id}}" />
+    <p style="font-weigth: bold;color: red">
+    真的要彻底删除吗? (不可恢复) <input type="submit" value="Yes" />
+    | <a href="/recyclebin">No</a>
+    </p>
+  </form>
+  <p>
+    Title: <strong>{{item.title}}</strong><br />
+    {% if item.username %}Username: {{item.username}}{% endif %}<br />
+    {% if item.notes %}Notes: {{item.notes}}{% endif %}
+  </p>
+{% endif %}
 
 {% endblock body %}

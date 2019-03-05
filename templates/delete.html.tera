@@ -8,6 +8,10 @@
 
 <p><br /></p>
 
+{% if msg %}
+  <p class="FlashMessage">{{msg}}</p>
+{% endif %}
+
 {% set item = result[0] %}
 <form action="/delete" method="POST" autocomplete="off">
   <input type="hidden" name="_method" value="put" />

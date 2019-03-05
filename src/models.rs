@@ -1,4 +1,5 @@
 use chrono::{SecondsFormat, Utc};
+use diesel::result;
 use diesel::{self, prelude::*};
 use sodiumoxide::crypto::secretbox;
 use uuid::Uuid;
@@ -132,12 +133,15 @@ impl MimaItem {
     }
 
     /// 通过 id 获取一条记录
-    pub fn get_by_id(id: &str, conn: &PgConnection, key: &secretbox::Key) -> EditForm {
-        let item = allmima::table
+    pub fn get_by_id(
+        id: &str,
+        conn: &PgConnection,
+        key: &secretbox::Key,
+    ) -> Result<EditForm, result::Error> {
+        allmima::table
             .filter(allmima::id.eq(id))
             .get_result::<MimaItem>(conn)
-            .unwrap();
-        item.to_edit_delete(key)
+            .map(|item| item.to_edit_delete(key))
     }
 
     /// 通过 id 把一条记录标记为已删除
@@ -146,13 +150,13 @@ impl MimaItem {
         diesel::update(target)
             .set(allmima::deleted.eq(now_string()))
             .execute(conn)
-            .unwrap();
+            .unwrap(); // BUG
     }
 
     /// 通过 id 彻底删除一条记录 (不可恢复)
     pub fn delete_forever(id: &str, conn: &PgConnection) {
         let target = allmima::table.filter(allmima::id.eq(id));
-        diesel::delete(target).execute(conn).unwrap();
+        diesel::delete(target).execute(conn).unwrap(); // BUG
     }
 
     /// 把 Some(Vec<u8>) 转换为 secretbox::Nonce

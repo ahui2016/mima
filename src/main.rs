@@ -150,13 +150,7 @@ fn recyclebin(flash: Option<FlashMessage>, state: State<Login>, conn: DbConn) ->
 #[get("/delete?<id>")]
 fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
     let key = state.key.lock().unwrap();
-    Template::render(
-        "delete",
-        &ResultContext {
-            msg: None,
-            result: vec![MimaItem::get_by_id(&id, &conn, &key)],
-        },
-    )
+    delete_helper("delete", id, &conn, &key)
 }
 
 /// **[PUT]** 标记为删除 (修改删除实践, 移至回收站)
@@ -169,17 +163,11 @@ fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
     )
 }
 
-/// 删除彻底确认
+/// 彻底删除确认
 #[get("/deleteforever?<id>")]
 fn delete_forever_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
     let key = state.key.lock().unwrap();
-    Template::render(
-        "deleteforever",
-        &ResultContext {
-            msg: None,
-            result: vec![MimaItem::get_by_id(&id, &conn, &key)],
-        },
-    )
+    delete_helper("deleteforever", id, &conn, &key)
 }
 
 /// **[DELETE]** 彻底删除 (不可恢复)
@@ -425,5 +413,28 @@ impl Fairing for LoginFairing {
                 }
             }
         };
+    }
+}
+
+/// "delete_confirm" 与 "delete_forever_confirm" 的通用部分
+fn delete_helper(tmpl: &'static str, id: String, conn: &DbConn, key: &secretbox::Key) -> Template {
+    match MimaItem::get_by_id(&id, conn, key) {
+        Ok(result) => Template::render(
+            tmpl,
+            &ResultContext {
+                msg: None,
+                result: vec![result],
+            },
+        ),
+        Err(err) => {
+            let msg = format!("{}", err);
+            Template::render(
+                tmpl,
+                &ResultContext {
+                    msg: Some(&msg),
+                    result: Vec::new(),
+                },
+            )
+        }
     }
 }
