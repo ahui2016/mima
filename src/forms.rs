@@ -25,7 +25,7 @@ pub struct AddForm {
 }
 
 /// 与 `Edit` 页面的表单对应, 也用于首页, 删除确认页面.
-#[derive(FromForm, Serialize)]
+#[derive(FromForm, Serialize, Debug)]
 pub struct EditForm {
     pub id: String,
     pub title: String,
@@ -55,8 +55,16 @@ pub struct AddContext<'a, 'b> {
 }
 
 /// 向前端返回搜索结果，结果可能为空，也可能包含一条或多条数据。
-#[derive(Serialize, Default)]
+#[derive(Serialize)]
 pub struct ResultContext<'a> {
     pub msg: Option<&'a str>,
     pub result: Vec<EditForm>,
+}
+
+/// 专用于 "编辑" 页面的模板数据
+#[derive(Serialize, Default)]
+pub struct EditContext<'a> {
+    pub msg: Option<&'a str>,
+    pub item: Option<EditForm>,
+    pub history: Vec<EditForm>,
 }

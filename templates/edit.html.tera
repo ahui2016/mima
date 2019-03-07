@@ -1,0 +1,59 @@
+{% extends "base" %}
+
+{% block title %}Edit - Mima{% endblock title %}
+
+{% block body %}
+<h1><a href="/">Mima</a> .. Edit</h1>
+<hr />
+
+{% if msg %}
+  <p class="FlashMessage">{{msg}}</p>
+{% else %}
+<p><br /></p>
+{% endif %}
+
+{% if item %}
+  <form action="/edit" method="POST" autocomplete="off">
+    <input type="hidden" name="id" value="{{item.id}}" />
+    <label for="title">Title:</label>
+      <input type="text" name="title" id="title" class="Fields" autofocus required
+             value="{{item.title}}" onblur="this.value = this.value.trim()" />
+    <label for="username">Username:</label>
+      <input type="text" name="username" id="username" class="Fields"
+             value="{{item.username}}" onblur="this.value = this.value.trim()" />
+    <label for="password">Password: (<a href="#" onclick="generatePW()">generate</a>)</label>
+      <input type="text" name="password" id="password" class="Fields"
+             value="{{item.password}}" />
+    <label for="notes">Notes:</label>
+      <textarea name="notes" id="notes" class="Fields">{{item.title}}</textarea>
+    <p>
+      <input type="submit" value="Submit" />
+    </p>
+  </form>
+{% endif %}
+
+{% if history|length > 0 %}
+  <p>History</p>
+  <hr />
+  <ul>
+  {% for item in history %}
+    <li onmouseover="this.getElementsByTagName('span')[0].style.visibility = 'visible'"
+        onmouseout="this.getElementsByTagName('span')[0].style.visibility = 'hidden'">
+    <p>
+      <strong>{{item.title}}</strong> <span style="visibility: hidden">
+        <a id="use" href="#">use</a>
+        <a id="delete" href="#">delete</a>
+      </span><br />
+      {% if item.username %}Username: {{item.username}}{% endif %}
+      {% if item.username and item.password %}, {% endif %}
+      {% if item.password %}Password:
+        <span style="display: none">{{item.password}}</span>
+        (<a href="#">show</a>){% endif %}
+      {% if item.notes %}, Notes: {{item.notes}}{% endif %}
+    </p>
+    </li>
+  {% endfor %}
+  </ul>
+{% endif %}
+
+{% endblock body %}

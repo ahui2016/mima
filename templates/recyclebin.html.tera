@@ -31,7 +31,7 @@
       {% if item.username %}Username: {{item.username}}{% endif %}
       {% if item.username and item.password %}, {% endif %}
       {% if item.password %}Password:
-        <span style="display: none">{{item.username}}</span>
+        <span style="display: none">{{item.password}}</span>
         (<a href="#">show</a>){% endif %}
       {% if item.notes %}, Notes:
         <span style="display: none">{{item.notes}}</span>

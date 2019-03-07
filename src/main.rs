@@ -9,6 +9,7 @@
 //!
 //! - 安装时, 先参照 `create_role_and_database.md` 进行操作.
 //! - 由于采用了 sodiumoxide, 因此需要设定相关的环境变量 https://crates.io/crates/sodiumoxide
+//! - 安装方法详见 README.md
 
 #[macro_use]
 extern crate rocket;
@@ -106,6 +107,7 @@ fn main() {
                 delete_forever_confirm,
                 delete_forever,
                 recyclebin,
+                edit_page,
             ],
         )
         .attach(Template::fairing())
@@ -153,7 +155,7 @@ fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
     delete_helper("delete", id, &conn, &key)
 }
 
-/// **[PUT]** 标记为删除 (修改删除实践, 移至回收站)
+/// **[PUT]** 标记为删除 (修改删除时间, 移至回收站)
 #[put("/delete", data = "<form>")]
 fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
     MimaItem::mark_as_deleted(&form.id, &conn);
@@ -414,6 +416,34 @@ impl Fairing for LoginFairing {
             }
         };
     }
+}
+
+/// 修改的表单.
+#[get("/edit?<id>")]
+fn edit_page(id: String, state: State<Login>, conn: DbConn) -> Template {
+    let key = state.key.lock().unwrap();
+    let item = MimaItem::get_by_id(&id, &conn, &key);
+    if item.is_err() {
+        let msg = format!("{}", item.unwrap_err());
+        return Template::render(
+            "edit",
+            &EditContext {
+                msg: Some(&msg),
+                item: None,
+                history: Vec::new(),
+            },
+        );
+    }
+    let item = item.ok();
+    let history = HistoryItem::get_by_mima_id(&id, &conn, &key);
+    Template::render(
+        "edit",
+        &EditContext {
+            msg: None,
+            item,
+            history,
+        },
+    )
 }
 
 /// "delete_confirm" 与 "delete_forever_confirm" 的通用部分

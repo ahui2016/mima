@@ -23,6 +23,7 @@ table! {
         p_nonce -> Nullable<Bytea>,
         notes -> Nullable<Bytea>,
         n_nonce -> Nullable<Bytea>,
+        deleted -> Varchar,
     }
 }
 

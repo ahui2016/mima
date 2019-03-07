@@ -26,5 +26,6 @@ CREATE TABLE history (
     password    bytea,
     p_nonce     bytea,
     notes       bytea,
-    n_nonce     bytea
+    n_nonce     bytea,
+    deleted     varchar(20)     NOT NULL CHECK(char_length(deleted) = 20)
 );
