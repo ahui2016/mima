@@ -1,0 +1,13 @@
+[package]
+name = "auto_getter_derive"
+version = "0.1.0"
+authors = ["ahui2016 <ahui.2015@icloud.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "0.14.4"
+quote = "0.6.3"
+auto_getter = { path = "../../auto_getter" }

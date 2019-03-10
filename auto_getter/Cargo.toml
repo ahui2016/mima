@@ -1,0 +1,8 @@
+[package]
+name = "auto_getter"
+version = "0.1.0"
+authors = ["ahui2016 <ahui.2015@icloud.com>"]
+edition = "2018"
+
+[dependencies]
+sodiumoxide = "0.2.0"

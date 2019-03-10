@@ -8,9 +8,12 @@ use super::forms::{AddForm, EditForm};
 use super::schema::{allmima, history};
 use super::{EPOCH, FIRST_ID};
 
+use auto_getter::{AutoGetter, Decryptable};
+use auto_getter_derive::AutoGetter;
+
 /// 与数据表 `allmima` 的结构一一对应.
 #[table_name = "allmima"]
-#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone)]
+#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone, AutoGetter)]
 pub struct MimaItem {
     pub id: String,
     pub title: String,
@@ -23,8 +26,6 @@ pub struct MimaItem {
     pub created: String,
     pub deleted: String,
 }
-
-impl Decryptable for MimaItem {}
 
 impl MimaItem {
     /// 用于处理 `add` 页面的表单.
@@ -150,12 +151,6 @@ impl MimaItem {
         let target = allmima::table.filter(allmima::id.eq(id));
         diesel::delete(target).execute(conn).unwrap();
     }
-    /*
-       /// 把 Option(&Vec<u8>) 转换为 secretbox::Nonce
-       fn get_nonce(vec: Option<&Vec<u8>>) -> secretbox::Nonce {
-           secretbox::Nonce::from_slice(vec.unwrap()).unwrap()
-       }
-    */
 
     /// 对 MimaItem 里的 password 或 notes 进行加密
     fn encrypt(plaintext: &str, key: &secretbox::Key) -> (Option<Vec<u8>>, Option<Vec<u8>>) {
@@ -166,16 +161,6 @@ impl MimaItem {
             let encrypted = secretbox::seal(plaintext.as_bytes(), &nonce, key);
             (Some(encrypted), Some(nonce.to_vec()))
         }
-    }
-
-    /// 获取解密后的 password
-    fn pwd_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.password.as_ref(), self.p_nonce.as_ref(), key)
-    }
-
-    /// 获取解密后的 notes
-    fn notes_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.notes.as_ref(), self.n_nonce.as_ref(), key)
     }
 }
 
@@ -188,18 +173,6 @@ impl NonceToVec for secretbox::Nonce {
     /// 类型转换
     fn to_vec(self) -> Vec<u8> {
         self.0.to_vec()
-    }
-}
-
-/// 为了方便把 Option<&Vec<u8>> 转换为 secretbox::Nonce
-pub trait VecToNonce {
-    fn to_nonce(self) -> secretbox::Nonce;
-}
-
-impl VecToNonce for Option<&Vec<u8>> {
-    /// 类型转换
-    fn to_nonce(self) -> secretbox::Nonce {
-        secretbox::Nonce::from_slice(self.unwrap()).unwrap()
     }
 }
 
@@ -233,7 +206,7 @@ pub fn uuid_simple() -> String {
 
 /// 与数据表 `history` 的结构一一对应
 #[table_name = "history"]
-#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone)]
+#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone, AutoGetter)]
 pub struct HistoryItem {
     pub id: String,
     pub mima_id: String,
@@ -245,8 +218,6 @@ pub struct HistoryItem {
     pub n_nonce: Option<Vec<u8>>,
     pub deleted: String,
 }
-
-impl Decryptable for HistoryItem {}
 
 impl HistoryItem {
     /// 通过 mima_id 获取相关的全部记录 (并且解密).
@@ -270,38 +241,6 @@ impl HistoryItem {
             password: self.pwd_decrypt(key),
             notes: self.notes_decrypt(key),
             favorite: false,
-        }
-    }
-
-    /// 获取解密后的 password
-    fn pwd_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.password.as_ref(), self.p_nonce.as_ref(), key)
-    }
-
-    /// 获取解密后的 notes
-    fn notes_decrypt(&self, key: &secretbox::Key) -> String {
-        Self::decrypt(self.notes.as_ref(), self.n_nonce.as_ref(), key)
-    }
-}
-
-/// 用于解密, MimaItem 与 HistoryItem 的通用部分.
-pub trait Decryptable {
-    /// 对 password 或 notes 进行解密, 返回字符串.
-    ///
-    /// 如果被解密参数为 None, 则返回空字符串.
-    fn decrypt(
-        encrypted: Option<&Vec<u8>>,
-        nonce: Option<&Vec<u8>>,
-        key: &secretbox::Key,
-    ) -> String {
-        match encrypted {
-            Some(vec) => {
-                // let nonce = Self::get_nonce(nonce);
-                let nonce = nonce.to_nonce();
-                let decrypted = secretbox::open(vec, &nonce, key).unwrap();
-                String::from_utf8(decrypted).unwrap()
-            }
-            None => String::new(),
         }
     }
 }
