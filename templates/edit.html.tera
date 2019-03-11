@@ -14,7 +14,9 @@
 
 {% if item %}
   <form action="/edit" method="POST" autocomplete="off">
+    <input type="hidden" name="_method" value="put" />
     <input type="hidden" name="id" value="{{item.id}}" />
+    <input type="hidden" name="favorite" value="{{item.favorite}}" />
     <label for="title">Title:</label>
       <input type="text" name="title" id="title" class="Fields" autofocus required
              value="{{item.title}}" onblur="this.value = this.value.trim()" />
@@ -25,12 +27,14 @@
       <input type="text" name="password" id="password" class="Fields"
              value="{{item.password}}" />
     <label for="notes">Notes:</label>
-      <textarea name="notes" id="notes" class="Fields">{{item.title}}</textarea>
+      <textarea name="notes" id="notes" class="Fields">{{item.notes}}</textarea>
     <p>
       <input type="submit" value="Submit" />
     </p>
   </form>
 {% endif %}
+
+<p><br /></p>
 
 {% if history|length > 0 %}
   <p>History</p>
@@ -46,9 +50,7 @@
       </span><br />
       {% if item.username %}Username: {{item.username}}{% endif %}
       {% if item.username and item.password %}, {% endif %}
-      {% if item.password %}Password:
-        <span style="display: none">{{item.password}}</span>
-        (<a href="#">show</a>){% endif %}
+      {% if item.password %}Password: {{item.password}}{% endif %}
       {% if item.notes %}, Notes: {{item.notes}}{% endif %}
     </p>
     </li>

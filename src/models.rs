@@ -13,7 +13,7 @@ use auto_getter_derive::AutoGetter;
 
 /// 与数据表 `allmima` 的结构一一对应.
 #[table_name = "allmima"]
-#[derive(Serialize, Insertable, Queryable, Identifiable, Debug, Clone, AutoGetter)]
+#[derive(Serialize, Insertable, Queryable, Identifiable, AsChangeset, Debug, Clone, AutoGetter)]
 pub struct MimaItem {
     pub id: String,
     pub title: String,
@@ -46,6 +46,33 @@ impl MimaItem {
         }
     }
 
+    /// 用于处理 `edit` 页面的表单.
+    pub fn from_edit_form(form: EditForm, conn: &PgConnection, key: &secretbox::Key) -> MimaItem {
+        let item = allmima::table
+            .filter(allmima::id.eq(&form.id))
+            .get_result::<MimaItem>(conn)
+            .unwrap();
+        let (password, p_nonce) = if item.pwd_decrypt(key) == form.password {
+            (item.password.clone(), item.p_nonce.clone())
+        } else {
+            Self::encrypt(form.password.as_str(), key)
+        };
+        let (notes, n_nonce) = if item.notes_decrypt(key) == form.notes {
+            (item.notes, item.n_nonce)
+        } else {
+            Self::encrypt(form.notes.trim(), key)
+        };
+        MimaItem {
+            title: form.title.trim().into(),
+            username: form.username.trim().into(),
+            password,
+            p_nonce,
+            notes,
+            n_nonce,
+            ..item
+        }
+    }
+
     /// 当添加数据失败时, 为了避免用户原本输入的数据丢失, 需要向页面返回表单内容.
     pub fn to_add_form(&self, key: &secretbox::Key) -> AddForm {
         AddForm {
@@ -53,6 +80,21 @@ impl MimaItem {
             username: self.username.clone(),
             password: String::new(),
             notes: self.notes_decrypt(key).to_string(),
+        }
+    }
+
+    /// 转换为 HistoryItem 以便插入到 history 数据表.
+    pub fn into_history_item(self) -> HistoryItem {
+        HistoryItem {
+            id: uuid_simple(),
+            mima_id: self.id,
+            title: self.title,
+            username: self.username,
+            password: self.password,
+            p_nonce: self.p_nonce,
+            notes: self.notes,
+            n_nonce: self.n_nonce,
+            deleted: now_string(),
         }
     }
 
@@ -83,7 +125,7 @@ impl MimaItem {
     /// 返回精简的内容, 并且机密内容也解密.
     ///
     /// 适用于编辑, 删除, 回收站等页面.
-    pub fn to_edit_delete(&self, key: &secretbox::Key) -> EditForm {
+    fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
         EditForm {
             id: self.id.clone(),
             title: self.title.clone(),
@@ -99,6 +141,11 @@ impl MimaItem {
         diesel::insert_into(allmima::table)
             .values(self)
             .execute(conn)
+    }
+
+    /// 更新数据
+    pub fn update(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
+        diesel::update(self).set(self).execute(conn)
     }
 
     /// 从数据库提取全部记录, 输出时, 机密内容不解密.
@@ -121,7 +168,7 @@ impl MimaItem {
             .load::<MimaItem>(conn)
             .unwrap()
             .iter()
-            .map(|item| item.to_edit_delete(key))
+            .map(|item| item.to_edit_form(key))
             .collect()
     }
 
@@ -134,7 +181,7 @@ impl MimaItem {
         allmima::table
             .filter(allmima::id.eq(id))
             .get_result::<MimaItem>(conn)
-            .map(|item| item.to_edit_delete(key))
+            .map(|item| item.to_edit_form(key))
     }
 
     /// 通过 id 把一条记录标记为已删除
@@ -242,5 +289,12 @@ impl HistoryItem {
             notes: self.notes_decrypt(key),
             favorite: false,
         }
+    }
+
+    /// 向插入一条新的 history.
+    pub fn insert(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
+        diesel::insert_into(history::table)
+            .values(self)
+            .execute(conn)
     }
 }

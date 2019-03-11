@@ -108,6 +108,7 @@ fn main() {
                 delete_forever,
                 recyclebin,
                 edit_page,
+                edit,
             ],
         )
         .attach(Template::fairing())
@@ -319,9 +320,100 @@ fn add(
                 },
             ))
         }
-        // TODO: 成功后跳转到主页
         Ok(_) => Ok(Flash::success(Redirect::to(uri!(index)), "添加成功！")),
     }
+}
+
+/// 修改的表单.
+#[get("/edit?<id>")]
+fn edit_page(id: String, state: State<Login>, conn: DbConn) -> Template {
+    let key = state.key.lock().unwrap();
+    // let item = MimaItem::get_by_id(&id, &conn, &key);
+    match MimaItem::get_by_id(&id, &conn, &key) {
+        Err(err) => {
+            let msg = format!("{}", err);
+            Template::render(
+                "edit",
+                &EditContext {
+                    msg: Some(&msg),
+                    item: None,
+                    history: Vec::new(),
+                },
+            )
+        }
+        Ok(item) => Template::render(
+            "edit",
+            &EditContext {
+                msg: None,
+                item: Some(item),
+                history: HistoryItem::get_by_mima_id(&id, &conn, &key),
+            },
+        ),
+    }
+}
+
+/// **[PUT]** 修改, 服务器端对表单进行处理.
+#[put("/edit", data = "<form>")]
+fn edit(
+    form: Form<EditForm>,
+    state: State<Login>,
+    conn: DbConn,
+) -> Result<Flash<Redirect>, Template> {
+    let key = state.key.lock().unwrap();
+    let form = form.into_inner();
+
+    let new_data = EditForm {
+        title: form.title.trim().into(),
+        username: form.username.trim().into(),
+        notes: form.notes.trim().into(),
+        ..form
+    };
+
+    let history = HistoryItem::get_by_mima_id(&new_data.id, &conn, &key);
+
+    if new_data.title.is_empty() {
+        return Err(Template::render(
+            "edit",
+            &EditContext {
+                msg: Some("title不能为空。"),
+                item: Some(new_data),
+                history,
+            },
+        ));
+    }
+
+    let old_data = MimaItem::get_by_id(&new_data.id, &conn, &key).unwrap();
+    if new_data == old_data {
+        return Ok(Flash::success(
+            Redirect::to(uri!(index)),
+            "修改已被忽略 (因修改前后内容一样)",
+        ));
+    }
+
+    let old_item = MimaItem::from_edit_form(old_data, &conn, &key);
+    let new_item = MimaItem::from_edit_form(new_data.clone(), &conn, &key);
+    let result = new_item.update(&conn);
+
+    if result.is_err() {
+        let err = result.unwrap_err();
+        let err_info = format!("{}", err);
+        if !err_info.contains("allmima_title_username_deleted_key") {
+            panic!(err);
+        }
+        return Err(Template::render(
+            "edit",
+            &EditContext {
+                msg: Some("冲突：已有相同的 title, username。"),
+                item: Some(new_data),
+                history,
+            },
+        ));
+    }
+
+    let old_item = old_item.into_history_item();
+    old_item.insert(&conn).unwrap();
+    let msg = format!("【{}】修改成功！", new_item.title);
+    Ok(Flash::success(Redirect::to(uri!(index)), msg))
 }
 
 /// **中间件** Kind::Response
@@ -416,34 +508,6 @@ impl Fairing for LoginFairing {
             }
         };
     }
-}
-
-/// 修改的表单.
-#[get("/edit?<id>")]
-fn edit_page(id: String, state: State<Login>, conn: DbConn) -> Template {
-    let key = state.key.lock().unwrap();
-    let item = MimaItem::get_by_id(&id, &conn, &key);
-    if item.is_err() {
-        let msg = format!("{}", item.unwrap_err());
-        return Template::render(
-            "edit",
-            &EditContext {
-                msg: Some(&msg),
-                item: None,
-                history: Vec::new(),
-            },
-        );
-    }
-    let item = item.ok();
-    let history = HistoryItem::get_by_mima_id(&id, &conn, &key);
-    Template::render(
-        "edit",
-        &EditContext {
-            msg: None,
-            item,
-            history,
-        },
-    )
 }
 
 /// "delete_confirm" 与 "delete_forever_confirm" 的通用部分

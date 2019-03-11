@@ -1,5 +1,6 @@
 use sodiumoxide::crypto::secretbox;
 
+/// 用于获取解密后的数据, MimaItem 与 HistoryItem 的通用部分.
 pub trait AutoGetter {
     fn password_and_nonce(&self) -> (Option<& Vec<u8>>, Option<& Vec<u8>>);
     fn notes_and_nonce(&self) -> (Option<& Vec<u8>>, Option<& Vec<u8>>);

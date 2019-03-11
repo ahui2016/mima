@@ -4,8 +4,7 @@ use crate::proc_macro::TokenStream;
 use quote::quote;
 use syn;
 
-use auto_getter::Decryptable;
-
+/// 用于获取解密后的数据, MimaItem 与 HistoryItem 的通用部分.
 #[proc_macro_derive(AutoGetter)]
 pub fn auto_getter_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree
