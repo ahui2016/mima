@@ -1,5 +1,5 @@
 use chrono::{SecondsFormat, Utc};
-use diesel::result;
+use diesel::result::{self, QueryResult};
 use diesel::{self, prelude::*};
 use sodiumoxide::crypto::secretbox;
 use uuid::Uuid;
@@ -137,14 +137,14 @@ impl MimaItem {
     }
 
     /// 向数据库中插入一条新项目.
-    pub fn insert(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
+    pub fn insert(&self, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(allmima::table)
             .values(self)
             .execute(conn)
     }
 
     /// 更新数据
-    pub fn update(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
+    pub fn update(&self, conn: &PgConnection) -> QueryResult<usize> {
         diesel::update(self).set(self).execute(conn)
     }
 
@@ -184,13 +184,33 @@ impl MimaItem {
             .map(|item| item.to_edit_form(key))
     }
 
-    /// 通过 id 把一条记录标记为已删除
-    pub fn mark_as_deleted(id: &str, conn: &PgConnection) {
+    /// 根据 id 把一条记录标记为已删除
+    pub fn mark_as_deleted(id: &str, conn: &PgConnection) -> QueryResult<usize> {
         let target = allmima::table.filter(allmima::id.eq(id));
         diesel::update(target)
             .set(allmima::deleted.eq(now_string()))
             .execute(conn)
+    }
+
+    /// 把一条已标记为删除的记录改为未删除, 同时修改其 title 和创建日期.
+    ///
+    /// 修改 title 是为了避免 title 重复冲突.
+    /// 修改创建日期是为了排序 (由于没有修改日期).
+    pub fn recover(id: &str, conn: &PgConnection) -> QueryResult<usize> {
+        let title = allmima::table
+            .filter(allmima::id.eq(id))
+            .select(allmima::title)
+            .get_result::<String>(conn)
             .unwrap();
+        let title = format!("{} ({})", title, now_string());
+        let target = allmima::table.filter(allmima::id.eq(id));
+        diesel::update(target)
+            .set((
+                allmima::deleted.eq(EPOCH),
+                allmima::title.eq(title),
+                allmima::created.eq(now_string()),
+            ))
+            .execute(conn)
     }
 
     /// 通过 id 彻底删除一条记录 (不可恢复)
@@ -292,7 +312,7 @@ impl HistoryItem {
     }
 
     /// 向插入一条新的 history.
-    pub fn insert(&self, conn: &PgConnection) -> diesel::result::QueryResult<usize> {
+    pub fn insert(&self, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(history::table)
             .values(self)
             .execute(conn)

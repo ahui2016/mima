@@ -109,6 +109,7 @@ fn main() {
                 recyclebin,
                 edit_page,
                 edit,
+                recover,
             ],
         )
         .attach(Template::fairing())
@@ -159,10 +160,20 @@ fn delete_confirm(id: String, state: State<Login>, conn: DbConn) -> Template {
 /// **[PUT]** 标记为删除 (修改删除时间, 移至回收站)
 #[put("/delete", data = "<form>")]
 fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
-    MimaItem::mark_as_deleted(&form.id, &conn);
+    MimaItem::mark_as_deleted(&form.id, &conn).unwrap();
     Flash::success(
         Redirect::to(uri!(index)),
         "删除成功！(被删除条目已移至回收站)",
+    )
+}
+
+/// **[PUT]** 从回收站中恢复 (标记为未删除, 修改 title)
+#[put("/recover", data = "<form>")]
+fn recover(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
+    MimaItem::recover(&form.id, &conn).unwrap();
+    Flash::success(
+        Redirect::to(uri!(edit_page: &form.id)),
+        "已成功恢复, 请修改 title.",
     )
 }
 
@@ -326,9 +337,13 @@ fn add(
 
 /// 修改的表单.
 #[get("/edit?<id>")]
-fn edit_page(id: String, state: State<Login>, conn: DbConn) -> Template {
+fn edit_page(
+    id: String,
+    flash: Option<FlashMessage>,
+    state: State<Login>,
+    conn: DbConn,
+) -> Template {
     let key = state.key.lock().unwrap();
-    // let item = MimaItem::get_by_id(&id, &conn, &key);
     match MimaItem::get_by_id(&id, &conn, &key) {
         Err(err) => {
             let msg = format!("{}", err);
@@ -344,7 +359,7 @@ fn edit_page(id: String, state: State<Login>, conn: DbConn) -> Template {
         Ok(item) => Template::render(
             "edit",
             &EditContext {
-                msg: None,
+                msg: flash.as_ref().map(Flash::msg),
                 item: Some(item),
                 history: HistoryItem::get_by_mima_id(&id, &conn, &key),
             },
