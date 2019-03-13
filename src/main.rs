@@ -345,12 +345,21 @@ fn edit_page(
     conn: DbConn,
 ) -> Template {
     let key = state.key.lock().unwrap();
+
+    // 先判断 id 的正确性, 防止 history_id 正确但 id 错误的情况.
+    let mima_item = MimaItem::get_by_id(&id, &conn, &key);
     let result = match history_id {
-        Some(h_id) => HistoryItem::get_by_id(&h_id, &conn, &key).map(|item| EditForm {
-            id: id.clone(),
-            ..item
-        }),
-        None => MimaItem::get_by_id(&id, &conn, &key),
+        Some(h_id) => {
+            if mima_item.is_err() {
+                mima_item
+            } else {
+                HistoryItem::get_by_id(&h_id, &conn, &key).map(|item| EditForm {
+                    id: id.clone(),
+                    ..item
+                })
+            }
+        }
+        None => mima_item,
     };
     match result {
         Err(err) => {
