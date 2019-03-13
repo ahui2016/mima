@@ -40,18 +40,18 @@
   <p>History</p>
   <hr />
   <ul>
-  {% for item in history %}
+  {% for h_item in history %}
     <li onmouseover="this.getElementsByTagName('span')[0].style.visibility = 'visible'"
         onmouseout="this.getElementsByTagName('span')[0].style.visibility = 'hidden'">
     <p>
-      <strong>{{item.title}}</strong> <span style="visibility: hidden">
-        <a id="use" href="#">use</a>
-        <a id="delete" href="#">delete</a>
+      <strong>{{h_item.title}}</strong> <span style="visibility: hidden">
+        <a id="use" href="/edit?id={{item.id}}&history_id={{h_item.id}}">use</a>
+        <a id="delete" href="/delete-history?id={{h_item.id}}">delete</a>
       </span><br />
-      {% if item.username %}Username: {{item.username}}{% endif %}
-      {% if item.username and item.password %}, {% endif %}
-      {% if item.password %}Password: {{item.password}}{% endif %}
-      {% if item.notes %}, Notes: {{item.notes}}{% endif %}
+      {% if h_item.username %}Username: {{h_item.username}}{% endif %}
+      {% if h_item.username and h_item.password %}, {% endif %}
+      {% if h_item.password %}Password: {{h_item.password}}{% endif %}
+      {% if h_item.notes %}, Notes: {{h_item.notes}}{% endif %}
     </p>
     </li>
   {% endfor %}

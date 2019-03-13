@@ -287,6 +287,18 @@ pub struct HistoryItem {
 }
 
 impl HistoryItem {
+    /// 通过 id 获取一条历史记录 (已解密)
+    pub fn get_by_id(
+        id: &str,
+        conn: &PgConnection,
+        key: &secretbox::Key,
+    ) -> Result<EditForm, result::Error> {
+        history::table
+            .filter(history::id.eq(id))
+            .get_result::<HistoryItem>(conn)
+            .map(|item| item.to_edit_form(key))
+    }
+
     /// 通过 mima_id 获取相关的全部记录 (并且解密).
     pub fn get_by_mima_id(id: &str, conn: &PgConnection, key: &secretbox::Key) -> Vec<EditForm> {
         history::table
@@ -300,7 +312,7 @@ impl HistoryItem {
     }
 
     /// 返回适用于展示的内容, 已解密.
-    pub fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
+    fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
         EditForm {
             id: self.id.clone(),
             title: self.title.clone(),

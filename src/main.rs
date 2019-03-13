@@ -172,7 +172,7 @@ fn mark_as_deleted(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
 fn recover(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
     MimaItem::recover(&form.id, &conn).unwrap();
     Flash::success(
-        Redirect::to(uri!(edit_page: &form.id)),
+        Redirect::to(uri!(edit_page: &form.id, _)),
         "已成功恢复, 请修改 title.",
     )
 }
@@ -336,15 +336,23 @@ fn add(
 }
 
 /// 修改的表单.
-#[get("/edit?<id>")]
+#[get("/edit?<id>&<history_id>")]
 fn edit_page(
     id: String,
+    history_id: Option<String>,
     flash: Option<FlashMessage>,
     state: State<Login>,
     conn: DbConn,
 ) -> Template {
     let key = state.key.lock().unwrap();
-    match MimaItem::get_by_id(&id, &conn, &key) {
+    let result = match history_id {
+        Some(h_id) => HistoryItem::get_by_id(&h_id, &conn, &key).map(|item| EditForm {
+            id: id.clone(),
+            ..item
+        }),
+        None => MimaItem::get_by_id(&id, &conn, &key),
+    };
+    match result {
         Err(err) => {
             let msg = format!("{}", err);
             Template::render(
