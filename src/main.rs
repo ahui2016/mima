@@ -516,7 +516,7 @@ impl Fairing for LoginFairing {
                     return;
                 }
 
-                let dt = state.datetime.lock().unwrap();
+                let mut dt = state.datetime.lock().unwrap();
                 let expired = *dt + state.period;
 
                 // 有密码（已登入），但过期（超时）
@@ -528,6 +528,8 @@ impl Fairing for LoginFairing {
                     request.set_uri(uri!(timeout));
                     return;
                 }
+                // 未超时, 重新计时.
+                *dt = Utc::now();
 
                 // 上述特殊情况皆不成立（已成功登入）
                 if vec!["/login", "/new-account", "/timeout"]
