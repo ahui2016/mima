@@ -214,9 +214,9 @@ impl MimaItem {
     }
 
     /// 通过 id 彻底删除一条记录 (不可恢复)
-    pub fn delete_forever(id: &str, conn: &PgConnection) {
+    pub fn delete_forever(id: &str, conn: &PgConnection) -> QueryResult<usize> {
         let target = allmima::table.filter(allmima::id.eq(id));
-        diesel::delete(target).execute(conn).unwrap();
+        diesel::delete(target).execute(conn)
     }
 
     /// 对 MimaItem 里的 password 或 notes 进行加密
@@ -299,6 +299,15 @@ impl HistoryItem {
             .map(|item| item.to_edit_form(key))
     }
 
+    /// 通过 history_id 查找 mima_id.
+    pub fn get_mima_id(history_id: &str, conn: &PgConnection) -> String {
+        history::table
+            .filter(history::id.eq(history_id))
+            .select(history::mima_id)
+            .get_result::<String>(conn)
+            .unwrap()
+    }
+
     /// 通过 mima_id 获取相关的全部记录 (并且解密).
     pub fn get_by_mima_id(id: &str, conn: &PgConnection, key: &secretbox::Key) -> Vec<EditForm> {
         history::table
@@ -328,5 +337,11 @@ impl HistoryItem {
         diesel::insert_into(history::table)
             .values(self)
             .execute(conn)
+    }
+
+    /// 通过 id 彻底删除一条历史记录 (不可恢复)
+    pub fn delete_forever(id: &str, conn: &PgConnection) -> QueryResult<usize> {
+        let target = history::table.filter(history::id.eq(id));
+        diesel::delete(target).execute(conn)
     }
 }

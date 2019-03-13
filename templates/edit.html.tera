@@ -41,18 +41,23 @@
   <hr />
   <ul>
   {% for h_item in history %}
-    <li onmouseover="this.getElementsByTagName('span')[0].style.visibility = 'visible'"
-        onmouseout="this.getElementsByTagName('span')[0].style.visibility = 'hidden'">
-    <p>
-      <strong>{{h_item.title}}</strong> <span style="visibility: hidden">
-        <a id="use" href="/edit?id={{item.id}}&history_id={{h_item.id}}">use</a>
-        <a id="delete" href="/delete-history?id={{h_item.id}}">delete</a>
-      </span><br />
+    <li onmouseover="this.getElementsByTagName('div')[0].style.display = 'inline'"
+        onmouseout="this.getElementsByTagName('div')[0].style.display = 'none'">
+      <strong>{{h_item.title}}</strong> <div style="display: none">
+        <a href="/edit?id={{item.id}}&history_id={{h_item.id}}">use</a>
+        <button onclick="this.style.display = 'none'; this.parentElement.getElementsByTagName('form')[0].style.display = 'inline'">delete</button>
+        <form action="/delete-history" method="POST" style="display: none">
+          <input type="hidden" name="_method" value="delete" />
+          <input type="hidden" name="id" value="{{h_item.id}}" />
+          <span class="FlashMessage">真的删除吗? (不可恢复)</span>
+          <input type="submit" value="delete forever" />
+        </form>
+      </div>
+      <br />
       {% if h_item.username %}Username: {{h_item.username}}{% endif %}
       {% if h_item.username and h_item.password %}, {% endif %}
       {% if h_item.password %}Password: {{h_item.password}}{% endif %}
       {% if h_item.notes %}, Notes: {{h_item.notes}}{% endif %}
-    </p>
     </li>
   {% endfor %}
   </ul>

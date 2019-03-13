@@ -110,6 +110,7 @@ fn main() {
                 edit_page,
                 edit,
                 recover,
+                delete_history,
             ],
         )
         .attach(Template::fairing())
@@ -187,10 +188,21 @@ fn delete_forever_confirm(id: String, state: State<Login>, conn: DbConn) -> Temp
 /// **[DELETE]** 彻底删除 (不可恢复)
 #[delete("/delete", data = "<form>")]
 fn delete_forever(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
-    MimaItem::delete_forever(&form.id, &conn);
+    MimaItem::delete_forever(&form.id, &conn).unwrap();
     Flash::success(
         Redirect::to(uri!(recyclebin)),
         "删除成功！(彻底删除, 不可恢复)",
+    )
+}
+
+/// **[DELETE]** 彻底删除一条历史记录 (不可恢复)
+#[delete("/delete-history", data = "<form>")]
+fn delete_history(form: Form<IdForm>, conn: DbConn) -> Flash<Redirect> {
+    let mima_id = HistoryItem::get_mima_id(&form.id, &conn);
+    HistoryItem::delete_forever(&form.id, &conn).unwrap();
+    Flash::success(
+        Redirect::to(uri!(edit_page: &mima_id, _)),
+        "历史记录删除成功 (彻底删除, 不可恢复)",
     )
 }
 

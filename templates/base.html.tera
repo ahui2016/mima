@@ -13,6 +13,9 @@
         font-size: 12pt;
         margin-left: 2em;
       }
+      li {
+        margin-bottom: 1em;
+      }
       label {
         display: block;
       }
