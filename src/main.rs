@@ -30,7 +30,7 @@ use std::env;
 use std::str;
 use std::sync::Mutex;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, Local, Utc};
 use diesel::prelude::*;
 use dotenv::dotenv;
 use rocket::fairing::{self, Fairing};
@@ -294,8 +294,19 @@ fn timeout() -> Template {
 
 /// 成功登入后, 访问 `/login`, `/new-account`, `/timeout` 时跳转到该页面.
 #[get("/logged-in")]
-fn logged_in() -> Template {
-    Template::render("logged-in", FlashContext::default())
+fn logged_in(state: State<Login>) -> Template {
+    let dt = state.datetime.lock().unwrap();
+    let expired = *dt + state.period;
+    let expired = expired
+        .with_timezone(&Local)
+        .format("%Y-%m-%d %H:%M")
+        .to_string();
+    Template::render(
+        "logged-in",
+        FlashContext {
+            msg: Some(&expired),
+        },
+    )
 }
 
 /// 添加项目的表单.

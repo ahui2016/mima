@@ -9,4 +9,9 @@
 
 <p class="FlashMessage">目前状态：非新账户，已成功登入，未超时。</p>
 
+{% if msg %}
+  <p>当前时间: {{ now() | date(format="%Y-%m-%d %H:%M") }}</p>
+  <p>时限: {{msg}}</p>
+{% endif %}
+
 {% endblock body %}
