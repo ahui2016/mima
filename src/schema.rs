@@ -23,10 +23,14 @@ table! {
         p_nonce -> Nullable<Bytea>,
         notes -> Nullable<Bytea>,
         n_nonce -> Nullable<Bytea>,
+        favorite -> Bool,
         deleted -> Varchar,
     }
 }
 
 joinable!(history -> allmima (mima_id));
 
-allow_tables_to_appear_in_same_query!(allmima, history,);
+allow_tables_to_appear_in_same_query!(
+    allmima,
+    history,
+);

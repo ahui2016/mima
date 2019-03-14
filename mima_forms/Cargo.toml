@@ -1,9 +1,12 @@
 [package]
-name = "auto_getter"
+name = "mima_forms"
 version = "0.1.0"
 authors = ["ahui2016 <ahui.2015@icloud.com>"]
 edition = "2018"
 
 [dependencies]
 sodiumoxide = "0.2.0"
-mima_forms = { path = "../mima_forms" }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+rocket = "0.4.0"

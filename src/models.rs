@@ -4,12 +4,12 @@ use diesel::{self, prelude::*};
 use sodiumoxide::crypto::secretbox;
 use uuid::Uuid;
 
-use super::forms::{AddForm, EditForm};
 use super::schema::{allmima, history};
 use super::{EPOCH, FIRST_ID};
 
 use auto_getter::{AutoGetter, Decryptable};
 use auto_getter_derive::AutoGetter;
+use mima_forms::{AddForm, EditForm};
 
 /// 与数据表 `allmima` 的结构一一对应.
 #[table_name = "allmima"]
@@ -94,6 +94,7 @@ impl MimaItem {
             p_nonce: self.p_nonce,
             notes: self.notes,
             n_nonce: self.n_nonce,
+            favorite: self.favorite,
             deleted: now_string(),
         }
     }
@@ -118,20 +119,6 @@ impl MimaItem {
             username: self.username.clone(),
             password,
             notes,
-            favorite: self.favorite,
-        }
-    }
-
-    /// 返回精简的内容, 并且机密内容也解密.
-    ///
-    /// 适用于编辑, 删除, 回收站等页面.
-    fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
-        EditForm {
-            id: self.id.clone(),
-            title: self.title.clone(),
-            username: self.username.clone(),
-            password: self.pwd_decrypt(key),
-            notes: self.notes_decrypt(key),
             favorite: self.favorite,
         }
     }
@@ -283,6 +270,7 @@ pub struct HistoryItem {
     pub p_nonce: Option<Vec<u8>>,
     pub notes: Option<Vec<u8>>,
     pub n_nonce: Option<Vec<u8>>,
+    pub favorite: bool, // 没有必要, 只是为了共用 EditForm.
     pub deleted: String,
 }
 
@@ -318,18 +306,6 @@ impl HistoryItem {
             .iter()
             .map(|item| item.to_edit_form(key))
             .collect()
-    }
-
-    /// 返回适用于展示的内容, 已解密.
-    fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
-        EditForm {
-            id: self.id.clone(),
-            title: self.title.clone(),
-            username: self.username.clone(),
-            password: self.pwd_decrypt(key),
-            notes: self.notes_decrypt(key),
-            favorite: false,
-        }
     }
 
     /// 向插入一条新的 history.

@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 extern crate proc_macro;
 
 use crate::proc_macro::TokenStream;
@@ -36,6 +38,19 @@ fn impl_auto_getter(ast: &syn::DeriveInput) -> TokenStream {
             fn notes_decrypt(&self, key: &secretbox::Key) -> String {
                 let (notes, nonce) = self.notes_and_nonce();
                 Self::decrypt(notes, nonce, key)
+            }
+            /// 返回适用于展示的内容, 已解密.
+            ///
+            /// 适用于编辑, 删除, 回收站等页面.
+            fn to_edit_form(&self, key: &secretbox::Key) -> EditForm {
+                EditForm {
+                    id: self.id.clone(),
+                    title: self.title.clone(),
+                    username: self.username.clone(),
+                    password: self.pwd_decrypt(key),
+                    notes: self.notes_decrypt(key),
+                    favorite: self.favorite,
+                }
             }
         }
     };

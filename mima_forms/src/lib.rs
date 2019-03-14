@@ -1,3 +1,10 @@
+//! 与网页表单对应的一些 struct, 以及向网页传递数据的一些 context.
+
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate rocket;
+
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::crypto::secretbox;
 

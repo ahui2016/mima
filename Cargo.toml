@@ -5,6 +5,7 @@ authors = ["ahui2016 <ahui.2015@icloud.com>"]
 edition = "2018"
 
 [dependencies]
+mima_forms = { path = "./mima_forms" }
 auto_getter = { path = "./auto_getter" }
 auto_getter_derive = { path = "./auto_getter/auto_getter_derive" }
 rocket = "0.4.0"

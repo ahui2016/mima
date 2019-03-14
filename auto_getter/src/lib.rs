@@ -1,3 +1,4 @@
+use mima_forms::EditForm;
 use sodiumoxide::crypto::secretbox;
 
 /// 用于获取解密后的数据, MimaItem 与 HistoryItem 的通用部分.
@@ -6,6 +7,7 @@ pub trait AutoGetter {
     fn notes_and_nonce(&self) -> (Option<& Vec<u8>>, Option<& Vec<u8>>);
     fn pwd_decrypt(&self, key: &secretbox::Key) -> String;
     fn notes_decrypt(&self, key: &secretbox::Key) -> String;
+    fn to_edit_form(&self, key: &secretbox::Key) -> EditForm;
 }
 
 /// 用于解密, MimaItem 与 HistoryItem 的通用部分.
