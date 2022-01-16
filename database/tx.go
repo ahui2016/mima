@@ -1,6 +1,10 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"ahui2016.github.com/mima/stmt"
+)
 
 type TX interface {
 	Exec(string, ...interface{}) (sql.Result, error)
@@ -24,4 +28,33 @@ func getInt1(tx TX, query string, arg ...interface{}) (n int64, err error) {
 
 type Row interface {
 	Scan(...interface{}) error
+}
+
+func insertMima(tx TX, mima *Mima) error {
+	_, err := tx.Exec(
+		stmt.InsertMima,
+		mima.ID,
+		mima.Title,
+		mima.Label,
+		mima.Username,
+		mima.Password,
+		mima.Notes,
+		mima.CTime,
+		mima.MTime,
+	)
+	return err
+}
+
+func scanMima(row Row) (mima Mima, err error) {
+	err = row.Scan(
+		&mima.ID,
+		&mima.Title,
+		&mima.Label,
+		&mima.Username,
+		&mima.Password,
+		&mima.Notes,
+		&mima.CTime,
+		&mima.MTime,
+	)
+	return
 }

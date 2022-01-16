@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -56,7 +57,6 @@ func PathIsNotExist(name string) (ok bool) {
 	return
 }
 
-// PathIsExist .
 func PathIsExist(name string) bool {
 	return !PathIsNotExist(name)
 }
@@ -65,12 +65,10 @@ func TimeNow() int64 {
 	return time.Now().Unix()
 }
 
-// Base64Encode .
 func Base64Encode(data []byte) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
-// Base64Decode .
 func Base64Decode(s string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(s)
 }
@@ -92,4 +90,12 @@ func Unmarshal64_Wrong(data64 string, value interface{}) error {
 		return err
 	}
 	return json.Unmarshal(data, &value)
+}
+
+func RandomBytes32() []byte {
+	size := 32
+	someBytes := make([]byte, size)
+	_, err := rand.Read(someBytes)
+	Panic(err)
+	return someBytes
 }

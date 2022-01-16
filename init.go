@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"ahui2016.github.com/mima/database"
 	"ahui2016.github.com/mima/util"
@@ -20,8 +23,15 @@ var (
 )
 
 func init() {
+	userConfigDir, err := os.UserConfigDir()
+	util.Panic(err)
+	configFolder := filepath.Join(userConfigDir, AppConfigFolder)
+	os.MkdirAll(configFolder, 0640)
+	dbPath := filepath.Join(configFolder, dbFileName)
+	fmt.Println("Database:", dbPath)
+
 	flag.Parse()
-	util.Panic(db.Open(dbFileName))
+	util.Panic(db.Open(dbPath))
 	if *addr == "" {
 		s, err := db.GetSettings()
 		util.Panic(err)
