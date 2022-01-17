@@ -43,7 +43,7 @@ func (db *DB) Exec(query string, args ...interface{}) (err error) {
 	return
 }
 
-func (db *DB) Open(dbPath, password string) (err error) {
+func (db *DB) Open(dbPath string) (err error) {
 	if db.DB, err = sql.Open("sqlite3", dbPath+"?_fk=1"); err != nil {
 		return
 	}
@@ -53,14 +53,10 @@ func (db *DB) Open(dbPath, password string) (err error) {
 	}
 	e1 := initFirstID(mima_id_key, mima_id_prefix, db.DB)
 	e2 := db.initSettings(defaultSettings)
-	e3 := db.initFirstMima(password)
-	return util.WrapErrors(e1, e2, e3)
+	return util.WrapErrors(e1, e2)
 }
 
-func (db *DB) initFirstMima(password string) error {
-	if !db.isEmpty() {
-		return nil
-	}
+func (db *DB) InitFirstMima(password string) error {
 	userKey := sha256.Sum256([]byte(password))
 	db.userKey = &userKey
 	key := sha256.Sum256(util.RandomBytes32())
@@ -77,7 +73,7 @@ func (db *DB) initFirstMima(password string) error {
 	return db.insertFirstMima(m)
 }
 
-func (db *DB) isEmpty() bool {
+func (db *DB) IsEmpty() bool {
 	row := db.DB.QueryRow(stmt.GetMimaByID, theVeryFirstID)
 	if _, err := scanMima(row); err != sql.ErrNoRows {
 		return true
