@@ -75,9 +75,11 @@ func (db *DB) InitFirstMima(password string) error {
 
 func (db *DB) IsEmpty() bool {
 	row := db.DB.QueryRow(stmt.GetMimaByID, theVeryFirstID)
-	if _, err := scanMima(row); err != sql.ErrNoRows {
+	_, err := scanMima(row)
+	if err == sql.ErrNoRows {
 		return true
 	}
+	util.Panic(err)
 	return false
 }
 

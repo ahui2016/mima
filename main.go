@@ -13,10 +13,12 @@ import (
 var staticFiles embed.FS
 
 //go:embed static/*.html
-var htmlFiles embed.FS
+var staticHTML embed.FS
+var htmlFiles = getSubFS(staticHTML, "static")
 
 //go:embed static/ts/dist/*.js
-var jsFiles embed.FS
+var staticJS embed.FS
+var jsFiles = getSubFS(staticJS, "static/ts/dist")
 
 func main() {
 	defer db.DB.Close()
@@ -25,8 +27,8 @@ func main() {
 	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.HTTPErrorHandler = errorHandler
 
-	e.GET("/static/*", wrapHandler(getSubFS(htmlFiles, "static"), "/static/"))
-	// e.GET("/public/js/*", wrapHandler(getSubFS(jsFiles, "static/ts/dist")), jsFileHeader)
+	e.GET("/public/*", wrapHandler(htmlFiles, "/public/"))
+	e.GET("/public/js/*", wrapHandler(jsFiles, "/public/js/"))
 
 	api := e.Group("/api", sleep)
 	api.GET("/is-db-empty", isEmptyHandler)
