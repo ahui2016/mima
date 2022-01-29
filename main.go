@@ -8,15 +8,10 @@ import (
 )
 
 //go:embed static
-var staticFiles embed.FS
+var staticHTML embed.FS
 
-// go:embed static/*.html
-// var staticHTML embed.FS
-
-// go:embed static/ts/dist/*.js
-// var staticJS embed.FS
-
-// var jsFiles = getSubFS(staticJS, "static/ts/dist")
+//go:embed ts/dist/*.js
+var staticJS embed.FS
 
 func main() {
 	defer db.DB.Close()
@@ -26,12 +21,8 @@ func main() {
 	// e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	// e.HTTPErrorHandler = errorHandler
 
-	r.StaticFS("/public", EmbedFolder(staticFiles, "static"))
-	// r.Use(static.Serve("/public/", EmbedFolder(staticHTML, "static")))
-	// e.GET("/public/*", wrapHandler(htmlFiles, "/public/"))
-
-	// r.Use(static.Serve("/public/js/", EmbedFolder(staticJS, "public/js")))
-	// e.GET("/public/js/*", wrapHandler(jsFiles, "/public/js/"), jsFileHeader)
+	r.StaticFS("/public", EmbedFolder(staticHTML, "static"))
+	r.StaticFS("/js", EmbedFolder(staticJS, "ts/dist"))
 
 	api := r.Group("/api")
 	// api := e.Group("/api", sleep)
