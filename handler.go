@@ -6,7 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
 )
+
+const OK = http.StatusOK
 
 // Text 用于向前端返回一个简单的文本消息。
 // 为了保持一致性，总是向前端返回 JSON, 因此即使是简单的文本消息也使用 JSON.
@@ -24,10 +27,7 @@ type embedFileSystem struct {
 
 func (e embedFileSystem) Exists(prefix string, path string) bool {
 	_, err := e.Open(path)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // https://github.com/gin-contrib/static/issues/19
@@ -71,6 +71,6 @@ func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 // 	util.Panic(c.JSON(500, err))
 // }
 
-// func isEmptyHandler(c echo.Context) error {
-// 	return c.JSON(OK, db.IsEmpty())
-// }
+func isEmptyHandler(c *gin.Context) {
+	c.JSON(OK, db.IsEmpty())
+}

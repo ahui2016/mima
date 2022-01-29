@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -12,7 +11,6 @@ import (
 )
 
 const (
-	OK              = http.StatusOK
 	AppConfigFolder = "github-ahui2016/mima"
 	dbFileName      = "db-mima.sqlite"
 )
