@@ -52,8 +52,8 @@ func Sleep() gin.HandlerFunc {
 	}
 }
 
-// jsFileHeader 确保向前端返回正确的 js 文件类型。
-func jsFileHeader() gin.HandlerFunc {
+// JavaScriptHeader 确保向前端返回正确的 js 文件类型。
+func JavaScriptHeader() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Content-Type", "application/javascript")
 		c.Next()

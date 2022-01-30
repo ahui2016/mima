@@ -16,8 +16,9 @@ const (
 )
 
 var (
-	db   = new(database.DB)
-	addr = flag.String("addr", "", "Local IP address. Example: 127.0.0.1:80")
+	db    = new(database.DB)
+	addr  = flag.String("addr", "", "Local IP address. Example: 127.0.0.1:80")
+	debug = flag.Bool("debug", false, "Switch to debug mode.")
 )
 
 func init() {
