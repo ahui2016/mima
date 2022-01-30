@@ -2,8 +2,8 @@ package main
 
 import (
 	"embed"
+	"log"
 
-	"ahui2016.github.com/mima/util"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,30 +18,22 @@ func main() {
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
+
+	// https://github.com/gin-gonic/gin/issues/2697
 	// e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	// e.HTTPErrorHandler = errorHandler
 
 	r.StaticFS("/public", EmbedFolder(staticHTML, "static"))
-	r.StaticFS("/js", EmbedFolder(staticJS, "ts/dist"))
 
-	api := r.Group("/api")
-	// api := e.Group("/api", sleep)
+	// 这个 Group 只是为了给 StaticFS 添加 middleware
+	r.Group("/js", jsFileHeader()).StaticFS("/", EmbedFolder(staticJS, "ts/dist"))
+
+	api := r.Group("/api", Sleep())
 	{
 		api.GET("/is-db-empty", isEmptyHandler)
 	}
-	// api.GET("/is-db-empty", isEmptyHandler)
 
-	// e.Logger.Fatal(e.Start(*addr))
-	util.Panic(r.Run(*addr))
+	if err := r.Run(*addr); err != nil {
+		log.Fatal(err)
+	}
 }
-
-// func getSubFS(embedFS embed.FS, sub string) http.FileSystem {
-// 	fsys, err := fs.Sub(embedFS, sub)
-// 	util.Panic(err)
-// 	return http.FS(fsys)
-// }
-
-// func wrapHandler(fsys http.FileSystem, prefix string) echo.HandlerFunc {
-// 	fileServer := http.FileServer(fsys)
-// 	return echo.WrapHandler(http.StripPrefix(prefix, fileServer))
-// }

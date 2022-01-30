@@ -4,7 +4,9 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"time"
 
+	"ahui2016.github.com/mima/util"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -33,43 +35,30 @@ func (e embedFileSystem) Exists(prefix string, path string) bool {
 // https://github.com/gin-contrib/static/issues/19
 func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 	fsys, err := fs.Sub(fsEmbed, targetPath)
-	if err != nil {
-		panic(err)
-	}
+	util.Panic(err)
 	return embedFileSystem{
 		FileSystem: http.FS(fsys),
 	}
 }
 
-// func sleep(next echo.HandlerFunc) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		s, err := db.GetSettings()
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if s.Delay {
-// 			time.Sleep(time.Second)
-// 		}
-// 		return next(c)
-// 	}
-// }
+func Sleep() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		s, err := db.GetSettings()
+		util.Panic(err)
+		if s.Delay {
+			time.Sleep(time.Second)
+		}
+		c.Next()
+	}
+}
 
 // jsFileHeader 确保向前端返回正确的 js 文件类型。
-// func jsFileHeader(next echo.HandlerFunc) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		if strings.HasSuffix(c.Request().RequestURI, ".js") {
-// 			c.Response().Header().Set(echo.HeaderContentType, "application/javascript")
-// 		}
-// 		return next(c)
-// 	}
-// }
-
-// func errorHandler(err error, c echo.Context) {
-// 	if e, ok := err.(*echo.HTTPError); ok {
-// 		c.JSON(e.Code, e.Message)
-// 	}
-// 	util.Panic(c.JSON(500, err))
-// }
+func jsFileHeader() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "application/javascript")
+		c.Next()
+	}
+}
 
 func isEmptyHandler(c *gin.Context) {
 	c.JSON(OK, db.IsEmpty())
