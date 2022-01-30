@@ -5,6 +5,9 @@ import (
 	"log"
 	"net/http"
 
+	"ahui2016.github.com/mima/util"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,6 +28,8 @@ func main() {
 	}
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
+	sessionStore := cookie.NewStore(generateRandomKey())
+	r.Use(sessions.Sessions(sessionName, sessionStore))
 
 	// https://github.com/gin-gonic/gin/issues/2697
 	// e.IPExtractor = echo.ExtractIPFromXFFHeader()
@@ -45,9 +50,23 @@ func main() {
 		c.Redirect(http.StatusMovedPermanently, "/public/favicon.ico")
 	})
 
-	api := r.Group("/api", Sleep())
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/public/index.html")
+	})
+
+	r.GET("/is-default-pwd", func(c *gin.Context) {
+		yes, err := db.IsDefaultPwd()
+		util.Panic(err)
+		c.JSON(OK, yes)
+	})
+
+	r.GET("/is-signed-in", func(c *gin.Context) {
+		c.JSON(OK, isSignedIn(c))
+	})
+
+	api := r.Group("/api", Sleep(), CheckSignIn())
 	{
-		api.GET("/is-db-empty", isEmptyHandler)
+		api.GET("/is-db-empty", isDatabaseEmpty)
 	}
 
 	if err := r.Run(*addr); err != nil {

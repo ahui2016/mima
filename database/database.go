@@ -25,6 +25,8 @@ var defaultSettings = Settings{
 	Delay:   true,
 }
 
+var defaultPassword = "abc"
+
 type DB struct {
 	Path    string
 	DB      *sql.DB
@@ -53,10 +55,14 @@ func (db *DB) Open(dbPath string) (err error) {
 	}
 	e1 := initFirstID(mima_id_key, mima_id_prefix, db.DB)
 	e2 := db.initSettings(defaultSettings)
-	return util.WrapErrors(e1, e2)
+	e3 := db.InitFirstMima(defaultPassword)
+	return util.WrapErrors(e1, e2, e3)
 }
 
 func (db *DB) InitFirstMima(password string) error {
+	if !db.IsEmpty() {
+		return nil
+	}
 	userKey := sha256.Sum256([]byte(password))
 	db.userKey = &userKey
 	key := sha256.Sum256(util.RandomBytes32())
@@ -81,6 +87,27 @@ func (db *DB) IsEmpty() bool {
 	}
 	util.Panic(err)
 	return false
+}
+
+// IsDefaultPwd 尝试用初始密码（“abc”）解密，如果能正常解密，就要提示用户修改密码。
+func (db *DB) IsDefaultPwd() (bool, error) {
+	row := db.DB.QueryRow(stmt.GetMimaByID, theVeryFirstID)
+	m, err := scanMima(row)
+	if err != nil {
+		return false, err
+	}
+	if _, err = db.decryptFirst(m); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (db *DB) decryptFirst(firstMima Mima) (*Mima, error) {
+	return decrypt64(firstMima.Password, db.userKey)
+}
+
+func (db *DB) decrypt(sealed64 string) (*Mima, error) {
+	return decrypt64(sealed64, db.key)
 }
 
 // 用 db.userKey 加密真正的 key, 并转为 base64

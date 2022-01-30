@@ -60,6 +60,9 @@ func JavaScriptHeader() gin.HandlerFunc {
 	}
 }
 
-func isEmptyHandler(c *gin.Context) {
-	c.JSON(OK, db.IsEmpty())
+func signinHandler(c *gin.Context) {
+	if isSignedIn(c) {
+		c.Status(OK)
+		return
+	}
 }

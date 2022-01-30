@@ -19,7 +19,10 @@ var (
 	db    = new(database.DB)
 	addr  = flag.String("addr", "", "Local IP address. Example: 127.0.0.1:80")
 	debug = flag.Bool("debug", false, "Switch to debug mode.")
+	demo  = flag.Bool("demo", false, "Set this flag for demo.")
 )
+
+// var sessionSecretKey = generateRandomKey()
 
 func init() {
 	userConfigDir, err := os.UserConfigDir()
