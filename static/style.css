@@ -1,0 +1,13 @@
+@media (prefers-color-scheme: light) {
+
+  .alert-danger {
+    color: #e64980;
+  }
+  .alert-success {
+   color: #0ca678; 
+  }
+  .alert-primary {
+    color: black;
+  }
+
+}

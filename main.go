@@ -55,6 +55,11 @@ func main() {
 	})
 
 	r.GET("/is-default-pwd", func(c *gin.Context) {
+		if *demo {
+			// demo 允许使用默认密码，因此不需要提示前端修改密码。
+			c.JSON(OK, false)
+			return
+		}
 		yes, err := db.IsDefaultPwd()
 		util.Panic(err)
 		c.JSON(OK, yes)
@@ -64,10 +69,10 @@ func main() {
 		c.JSON(OK, isSignedIn(c))
 	})
 
-	api := r.Group("/api", Sleep(), CheckSignIn())
-	{
-		api.GET("/is-db-empty", isDatabaseEmpty)
-	}
+	// api := r.Group("/api", Sleep(), CheckSignIn())
+	// {
+	// 	api.GET("/is-db-empty", isDatabaseEmpty)
+	// }
 
 	if err := r.Run(*addr); err != nil {
 		log.Fatal(err)

@@ -1,28 +1,41 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import {mjElement, mjComponent, m, cc, span} from './mj.js';
-import * as util from './util.js';
+import { mjElement, mjComponent, m, cc, span } from "./mj.js";
+import * as util from "./util.js";
 
 const Alerts = util.CreateAlerts();
+const Loading = util.CreateLoading("center");
 
-const titleArea = m('div')
-  .addClass('text-center')
-  .append(
-    m('h1').text("mima")
-  );
+const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
 
-const DB_Status = cc('div');
+const GotoSignIn = cc("div", {
+  children: [
+    m("p").addClass("alert-danger").text("请先登入。"),
+    m("div").append("前往登入页面 ➡ ", util.LinkElem("/public/sign-in.html")),
+  ],
+});
 
-$('#root').append(
+$("#root").append(
   titleArea,
+  m(Loading).hide(),
   m(Alerts),
-  m(DB_Status),
+  m(GotoSignIn).hide()
 );
 
 init();
 
 function init() {
-  util.ajax({method:'GET',url:'/api/is-db-empty',alerts:Alerts}, resp => {
-    const isEmpty = resp as boolean;
-    DB_Status.elem().text(`${isEmpty}`);
-  })
+  checkSignIn();
+}
+
+function checkSignIn() {
+  util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
+    const yes = resp as boolean;
+    if (!yes) {
+      GotoSignIn.elem().show();
+    }
+  }),
+    undefined,
+    () => {
+      Loading.hide();
+    };
 }

@@ -65,17 +65,18 @@ func (db *DB) InitFirstMima(password string) error {
 	}
 	userKey := sha256.Sum256([]byte(password))
 	db.userKey = &userKey
-	key := sha256.Sum256(util.RandomBytes32())
-	db.key = &key
-	sealedKey, err := db.encrypt64(key)
+	realKey := sha256.Sum256(util.RandomBytes32())
+	m := &Mima{
+		ID:       theVeryFirstID,
+		Password: util.Base64Encode(realKey[:]),
+		CTime:    util.TimeNow(),
+	}
+	sealed64, err := db.encryptFirst(m)
 	if err != nil {
 		return err
 	}
-	m := &Mima{
-		ID:       theVeryFirstID,
-		Password: sealedKey,
-		CTime:    util.TimeNow(),
-	}
+	m.Password = ""
+	m.Notes = sealed64
 	return db.insertFirstMima(m)
 }
 
@@ -96,27 +97,40 @@ func (db *DB) IsDefaultPwd() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if _, err = db.decryptFirst(m); err != nil {
+	// 只有当未登入时才会使用本函数，因此可大胆修改 db.userKey
+	userKey := sha256.Sum256([]byte(defaultPassword))
+	db.userKey = &userKey
+	if err = db.decryptFirst(m); err != nil {
 		return false, nil
 	}
 	return true, nil
 }
 
-func (db *DB) decryptFirst(firstMima Mima) (*Mima, error) {
-	return decrypt64(firstMima.Password, db.userKey)
+func (db *DB) encryptFirst(m *Mima) (string, error) {
+	mimaJSON, err := json.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+	return seal64(mimaJSON, db.userKey)
+}
+
+// decryptFirst decrypts the first mima and set db.key
+func (db *DB) decryptFirst(firstMima Mima) error {
+	m, err := decrypt64(firstMima.Notes, db.userKey)
+	if err != nil {
+		return err
+	}
+	keySlice, err := util.Base64Decode(m.Password)
+	if err != nil {
+		return err
+	}
+	key := bytesToKey(keySlice)
+	db.key = &key
+	return nil
 }
 
 func (db *DB) decrypt(sealed64 string) (*Mima, error) {
 	return decrypt64(sealed64, db.key)
-}
-
-// 用 db.userKey 加密真正的 key, 并转为 base64
-func (db *DB) encrypt64(key SecretKey) (string, error) {
-	keyJSON, err := json.Marshal(key)
-	if err != nil {
-		return "", err
-	}
-	return seal64(keyJSON, db.userKey)
 }
 
 func (db *DB) insertFirstMima(mima *Mima) (err error) {
