@@ -21,14 +21,30 @@ const GotoChangePwd = cc("div", {
   ],
 });
 
-const Form = cc("div", { text: "The sign-in form" });
+const PwdInput = cc('input');
+const SubmitBtn = cc('button');
+
+const SignInForm = cc("form", {children:[
+  m('label').text('Master Password').attr({for:PwdInput.raw_id}),
+  m('div').append([
+    m(PwdInput).attr({type:'password'}),
+    m(SubmitBtn).text('Sign in').on('click', event => {
+      event.preventDefault();
+      const pwd = util.val(PwdInput);
+      if (!pwd) {
+        util.focus(PwdInput);
+        return;
+      }
+    })
+  ]),
+]});
 
 $("#root").append(
   titleArea,
   m(Loading).hide(),
   m(Alerts),
   m(GotoChangePwd).hide(),
-  m(Form).hide(),
+  m(SignInForm).hide(),
 );
 
 init();
@@ -45,7 +61,7 @@ function checkDefaultPwd() {
       if (yes) {
         GotoChangePwd.elem().show();
       } else {
-        Form.elem().show();
+        SignInForm.elem().show();
       }
     }
   ),

@@ -59,6 +59,9 @@ func (db *DB) Open(dbPath string) (err error) {
 	return util.WrapErrors(e1, e2, e3)
 }
 
+// 解密整个数据库，生成临时数据库。
+func (db *DB) Init(password string) error {}
+
 func (db *DB) InitFirstMima(password string) error {
 	if !db.IsEmpty() {
 		return nil

@@ -7,6 +7,16 @@ type Settings struct {
 	Delay   bool
 }
 
+type SealedMima struct {
+	ID     string // ShortID
+	Secret []byte // encrypted MimaWithHisory
+}
+
+type MimaWithHistory struct {
+	Mima
+	History []History
+}
+
 type Mima struct {
 	ID       string // ShortID
 	Title    string

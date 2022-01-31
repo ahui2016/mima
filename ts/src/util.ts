@@ -264,6 +264,14 @@ export function val(obj: mjElement | mjComponent, trim?: 'trim'): string {
   }
 }
 
+export function focus(obj: mjElement | mjComponent): void {
+  if ('elem' in obj) {
+    obj.elem().trigger('focus');
+  } else {
+    obj.trigger('focus');
+  }
+}
+
 export function itemID(id: string): string {
   return `i${id}`;
 }

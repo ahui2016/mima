@@ -65,4 +65,18 @@ func signinHandler(c *gin.Context) {
 		c.Status(OK)
 		return
 	}
+	type SignInForm struct {
+		Password string `form:"password" binding:"required"`
+	}
+	var form SignInForm
+	c.Bind(&form)
+
+	ip := c.ClientIP()
+	util.Panic(checkIPTryCount(ip))
+	if err := db.CheckPassword(pwd); err != nil {
+		ipTryCount[ip]++
+		return err
+	}
+	ipTryCount[ip] = 0
+
 }

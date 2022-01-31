@@ -1,7 +1,14 @@
 package stmt
 
-const CreateTables = `
+const CreateSealedMimaTable = `
+CREATE TABLE IF NOT EXISTS sealed_mima
+(
+  id       text   PRIMARY KEY COLLATE NOCASE,
+  secret   blob   NOT NULL
+);
+`
 
+const CreateTables = `
 CREATE TABLE IF NOT EXISTS mima
 (
   id          text   PRIMARY KEY COLLATE NOCASE,
