@@ -30,7 +30,24 @@ type Row interface {
 	Scan(...interface{}) error
 }
 
-func insertMima(tx TX, mima *Mima) error {
+func insertSealed(tx TX, sm SealedMima) error {
+	_, err := tx.Exec(
+		stmt.InsertSealed,
+		sm.ID,
+		sm.Secret,
+	)
+	return err
+}
+
+func scanSealed(row Row) (sm SealedMima, err error) {
+	err = row.Scan(
+		&sm.ID,
+		&sm.Secret,
+	)
+	return
+}
+
+func insertMima(tx TX, mima Mima) error {
 	_, err := tx.Exec(
 		stmt.InsertMima,
 		mima.ID,

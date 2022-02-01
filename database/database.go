@@ -16,8 +16,11 @@ import (
 const theVeryFirstID = "the-very-first-id"
 
 type (
-	Settings = model.Settings
-	Mima     = model.Mima
+	Settings        = model.Settings
+	Mima            = model.Mima
+	SealedMima      = model.SealedMima
+	History         = model.History
+	MimaWithHistory = model.MimaWithHistory
 )
 
 var defaultSettings = Settings{
@@ -30,8 +33,9 @@ var defaultPassword = "abc"
 type DB struct {
 	Path    string
 	DB      *sql.DB
-	userKey *SecretKey
-	key     *SecretKey
+	TempDB  *sql.DB
+	userKey SecretKey
+	key     SecretKey
 }
 
 func (db *DB) mustBegin() *sql.Tx {
@@ -41,16 +45,27 @@ func (db *DB) mustBegin() *sql.Tx {
 }
 
 func (db *DB) Exec(query string, args ...interface{}) (err error) {
+	_, err = db.TempDB.Exec(query, args...)
+	return
+}
+
+func (db *DB) SealedExec(query string, args ...interface{}) (err error) {
 	_, err = db.DB.Exec(query, args...)
 	return
 }
 
 func (db *DB) Open(dbPath string) (err error) {
-	if db.DB, err = sql.Open("sqlite3", dbPath+"?_fk=1"); err != nil {
+	if db.DB, err = sql.Open("sqlite3", dbPath); err != nil {
+		return
+	}
+	if db.TempDB, err = sql.Open("sqlite3", ":memory:?_fk=1"); err != nil {
 		return
 	}
 	db.Path = dbPath
-	if err = db.Exec(stmt.CreateTables); err != nil {
+	if err = db.SealedExec(stmt.CreateTables); err != nil {
+		return
+	}
+	if err = db.Exec(stmt.CreateTempTables); err != nil {
 		return
 	}
 	e1 := initFirstID(mima_id_key, mima_id_prefix, db.DB)
@@ -60,32 +75,30 @@ func (db *DB) Open(dbPath string) (err error) {
 }
 
 // 解密整个数据库，生成临时数据库。
-func (db *DB) Init(password string) error {}
+// func (db *DB) Init(password string) error {}
 
 func (db *DB) InitFirstMima(password string) error {
 	if !db.IsEmpty() {
 		return nil
 	}
-	userKey := sha256.Sum256([]byte(password))
-	db.userKey = &userKey
-	realKey := sha256.Sum256(util.RandomBytes32())
-	m := &Mima{
+	db.userKey = sha256.Sum256([]byte(password))
+	db.key = sha256.Sum256(util.RandomBytes32())
+	m := Mima{
 		ID:       theVeryFirstID,
-		Password: util.Base64Encode(realKey[:]),
+		Password: util.Base64Encode(db.key[:]),
 		CTime:    util.TimeNow(),
 	}
-	sealed64, err := db.encryptFirst(m)
+	m_w_h := MimaWithHistory{Mima: m}
+	sm, err := db.EncryptFirst(m_w_h)
 	if err != nil {
 		return err
 	}
-	m.Password = ""
-	m.Notes = sealed64
-	return db.insertFirstMima(m)
+	return insertSealed(db.DB, sm)
 }
 
 func (db *DB) IsEmpty() bool {
-	row := db.DB.QueryRow(stmt.GetMimaByID, theVeryFirstID)
-	_, err := scanMima(row)
+	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
+	_, err := scanSealed(row)
 	if err == sql.ErrNoRows {
 		return true
 	}
@@ -95,58 +108,69 @@ func (db *DB) IsEmpty() bool {
 
 // IsDefaultPwd 尝试用初始密码（“abc”）解密，如果能正常解密，就要提示用户修改密码。
 func (db *DB) IsDefaultPwd() (bool, error) {
-	row := db.DB.QueryRow(stmt.GetMimaByID, theVeryFirstID)
-	m, err := scanMima(row)
+	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
+	sm, err := scanSealed(row)
 	if err != nil {
 		return false, err
 	}
 	// 只有当未登入时才会使用本函数，因此可大胆修改 db.userKey
-	userKey := sha256.Sum256([]byte(defaultPassword))
-	db.userKey = &userKey
-	if err = db.decryptFirst(m); err != nil {
+	db.userKey = sha256.Sum256([]byte(defaultPassword))
+	if err = db.decryptFirst(sm); err != nil {
 		return false, nil
 	}
 	return true, nil
 }
 
-func (db *DB) encryptFirst(m *Mima) (string, error) {
-	mimaJSON, err := json.Marshal(m)
-	if err != nil {
-		return "", err
+// CheckPassword returns true if the pwd is correct.
+func (db *DB) CheckPassword(pwd string) bool {
+	if len(db.userKey) > 0 {
+		key := sha256.Sum256([]byte(pwd))
+		return db.userKey == key
 	}
-	return seal64(mimaJSON, db.userKey)
+	// TODO
+	return false
+}
+
+// EncryptFirst returns mwhToSM(mwh, db.userKey)
+func (db *DB) EncryptFirst(mwh MimaWithHistory) (SealedMima, error) {
+	return mwhToSM(mwh, db.userKey)
+}
+
+// Encrypt returns mwhToSM(mwh, db.key)
+func (db *DB) Encrypt(mwh MimaWithHistory) (SealedMima, error) {
+	return mwhToSM(mwh, db.key)
+}
+
+// mwhToSM encrypts a MimaWithHistory to a SealedMima.
+func mwhToSM(mwh MimaWithHistory, key SecretKey) (sm SealedMima, err error) {
+	mimaJSON, err := json.Marshal(mwh)
+	if err != nil {
+		return
+	}
+	sm.ID = mwh.ID
+	sm.Secret, err = encrypt(mimaJSON, key)
+	return
 }
 
 // decryptFirst decrypts the first mima and set db.key
-func (db *DB) decryptFirst(firstMima Mima) error {
-	m, err := decrypt64(firstMima.Notes, db.userKey)
+func (db *DB) decryptFirst(firstMima SealedMima) error {
+	mwh, err := decrypt(firstMima.Secret, db.userKey)
 	if err != nil {
 		return err
 	}
-	keySlice, err := util.Base64Decode(m.Password)
+	keySlice, err := util.Base64Decode(mwh.Password)
 	if err != nil {
 		return err
 	}
-	key := bytesToKey(keySlice)
-	db.key = &key
+	db.key = bytesToKey(keySlice)
 	return nil
 }
 
-func (db *DB) decrypt(sealed64 string) (*Mima, error) {
-	return decrypt64(sealed64, db.key)
+func (db *DB) decrypt(sm SealedMima) (MimaWithHistory, error) {
+	return decrypt(sm.Secret, db.key)
 }
 
-func (db *DB) insertFirstMima(mima *Mima) (err error) {
-	tx := db.mustBegin()
-	defer tx.Rollback()
-	mima.ID = theVeryFirstID
-	if err = insertMima(tx, mima); err != nil {
-		return
-	}
-	return tx.Commit()
-}
-
-func (db *DB) InsertMima(mima *Mima) (err error) {
+func (db *DB) InsertMima(mima Mima) (err error) {
 	tx := db.mustBegin()
 	defer tx.Rollback()
 

@@ -72,14 +72,14 @@ func (db *DB) initTextEntry(k, v string) error {
 	if _, err := getTextValue(k, db.DB); err != sql.ErrNoRows {
 		return err
 	}
-	return db.Exec(stmt.InsertTextValue, k, v)
+	return db.SealedExec(stmt.InsertTextValue, k, v)
 }
 
 func (db *DB) initIntEntry(k string, v int64) error {
 	if _, err := getIntValue(k, db.DB); err != sql.ErrNoRows {
 		return err
 	}
-	return db.Exec(stmt.InsertIntValue, k, v)
+	return db.SealedExec(stmt.InsertIntValue, k, v)
 }
 
 func (db *DB) initSettings(s Settings) error {
@@ -90,7 +90,7 @@ func (db *DB) initSettings(s Settings) error {
 	if err != nil {
 		return err
 	}
-	return db.Exec(stmt.InsertTextValue, settings_key, data64)
+	return db.SealedExec(stmt.InsertTextValue, settings_key, data64)
 }
 
 func (db *DB) GetSettings() (s Settings, err error) {

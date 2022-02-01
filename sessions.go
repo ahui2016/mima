@@ -14,6 +14,8 @@ const (
 	sessionName    = "mima-session"
 	cookieSignIn   = "mima-cookie-signin"
 	passwordMaxTry = 5
+	minute         = 60
+	defaultMaxAge  = 30 * minute
 )
 
 var ipTryCount = make(map[string]int)
@@ -49,4 +51,28 @@ func generateRandomKey() []byte {
 	_, err := rand.Read(b)
 	util.Panic(err)
 	return b
+}
+
+func newNormalOptions() sessions.Options {
+	return newOptions(defaultMaxAge)
+}
+
+func newExpireOptions() sessions.Options {
+	return newOptions(-1)
+}
+
+func newOptions(maxAge int) sessions.Options {
+	return sessions.Options{
+		Path:     "/",
+		MaxAge:   maxAge,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+}
+
+func sessionSet(s sessions.Session, val bool, options sessions.Options) error {
+	s.Set(cookieSignIn, val)
+	s.Options(options)
+	return s.Save()
 }

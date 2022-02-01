@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"ahui2016.github.com/mima/util"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -60,7 +61,7 @@ func JavaScriptHeader() gin.HandlerFunc {
 	}
 }
 
-func signinHandler(c *gin.Context) {
+func signInHandler(c *gin.Context) {
 	if isSignedIn(c) {
 		c.Status(OK)
 		return
@@ -73,10 +74,22 @@ func signinHandler(c *gin.Context) {
 
 	ip := c.ClientIP()
 	util.Panic(checkIPTryCount(ip))
-	if err := db.CheckPassword(pwd); err != nil {
+	if !db.CheckPassword(form.Password) {
 		ipTryCount[ip]++
-		return err
+		c.Status(http.StatusUnauthorized)
+		return
 	}
 	ipTryCount[ip] = 0
 
+	options := newNormalOptions()
+	session := sessions.Default(c)
+	util.Panic(sessionSet(session, true, options))
+	c.Status(OK)
+}
+
+func signOutHandler(c *gin.Context) {
+	options := newExpireOptions()
+	session := sessions.Default(c)
+	util.Panic(sessionSet(session, false, options))
+	c.Status(OK)
 }

@@ -26,34 +26,24 @@ func newNonce() (nonce Nonce, err error) {
 	return
 }
 
-func seal64(data []byte, key *SecretKey) (string, error) {
+func encrypt(data []byte, key SecretKey) ([]byte, error) {
 	nonce, err := newNonce()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	sealed := secretbox.Seal(nonce[:], data, &nonce, key)
-	return util.Base64Encode(sealed), nil
+	sealed := secretbox.Seal(nonce[:], data, &nonce, &key)
+	return sealed, nil
 }
 
-func decrypt64(sealed64 string, key *SecretKey) (*Mima, error) {
-	sealed, err := util.Base64Decode(sealed64)
-	if err != nil {
-		return nil, err
-	}
-	if len(sealed) < NonceSize {
-		return nil, errors.New("it's not a secretbox")
-	}
+func decrypt(sealed []byte, key SecretKey) (mwh MimaWithHistory, err error) {
 	var nonce Nonce
 	copy(nonce[:], sealed[:NonceSize])
-	mimaJSON, ok := secretbox.Open(nil, sealed[NonceSize:], &nonce, key)
+	mwhJSON, ok := secretbox.Open(nil, sealed[NonceSize:], &nonce, &key)
 	if !ok {
-		return nil, errors.New("db.decrypt: secretbox open fail")
+		return mwh, errors.New("db.decrypt: secretbox open fail")
 	}
-	m := new(Mima)
-	if err := json.Unmarshal(mimaJSON, m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	err = json.Unmarshal(mwhJSON, &mwh)
+	return
 }
 
 func base64DecodeToSecretKey(s string) (*SecretKey, error) {
