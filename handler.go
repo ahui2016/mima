@@ -74,7 +74,9 @@ func signInHandler(c *gin.Context) {
 
 	ip := c.ClientIP()
 	util.Panic(checkIPTryCount(ip))
-	if !db.CheckPassword(form.Password) {
+	yes, err := db.CheckPassword(form.Password)
+	util.Panic(err)
+	if !yes {
 		ipTryCount[ip]++
 		c.Status(http.StatusUnauthorized)
 		return

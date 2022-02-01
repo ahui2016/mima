@@ -29,6 +29,7 @@ var defaultSettings = Settings{
 }
 
 var defaultPassword = "abc"
+var blankKey SecretKey
 
 type DB struct {
 	Path    string
@@ -122,13 +123,22 @@ func (db *DB) IsDefaultPwd() (bool, error) {
 }
 
 // CheckPassword returns true if the pwd is correct.
-func (db *DB) CheckPassword(pwd string) bool {
-	if len(db.userKey) > 0 {
+func (db *DB) CheckPassword(pwd string) (bool, error) {
+	if db.userKey != blankKey {
 		key := sha256.Sum256([]byte(pwd))
-		return db.userKey == key
+		return db.userKey == key, nil
 	}
-	// TODO
-	return false
+	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
+	sm, err := scanSealed(row)
+	if err != nil {
+		return false, err
+	}
+	db.userKey = sha256.Sum256([]byte(pwd))
+	if err = db.decryptFirst(sm); err != nil {
+		db.userKey = blankKey // 要记得重置
+		return false, nil
+	}
+	return true, nil
 }
 
 // EncryptFirst returns mwhToSM(mwh, db.userKey)

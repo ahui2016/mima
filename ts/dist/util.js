@@ -1,44 +1,44 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import { m, cc, span } from './mj.js';
+import { m, cc, span } from "./mj.js";
 // 获取地址栏的参数。
 export function getUrlParam(param) {
     var _a;
     const queryString = new URLSearchParams(document.location.search);
-    return (_a = queryString.get(param)) !== null && _a !== void 0 ? _a : '';
+    return (_a = queryString.get(param)) !== null && _a !== void 0 ? _a : "";
 }
 /**
  * @param name is a mjComponent or the mjComponent's id
  */
 export function disable(name) {
-    const id = typeof name == 'string' ? name : name.id;
-    const nodeName = $(id).prop('nodeName');
-    if (nodeName == 'BUTTON' || nodeName == 'INPUT') {
-        $(id).prop('disabled', true);
+    const id = typeof name == "string" ? name : name.id;
+    const nodeName = $(id).prop("nodeName");
+    if (nodeName == "BUTTON" || nodeName == "INPUT") {
+        $(id).prop("disabled", true);
     }
     else {
-        $(id).css('pointer-events', 'none');
+        $(id).css("pointer-events", "none");
     }
 }
 /**
  * @param name is a mjComponent or the mjComponent's id
  */
 export function enable(name) {
-    const id = typeof name == 'string' ? name : name.id;
-    const nodeName = $(id).prop('nodeName');
-    if (nodeName == 'BUTTON' || nodeName == 'INPUT') {
-        $(id).prop('disabled', false);
+    const id = typeof name == "string" ? name : name.id;
+    const nodeName = $(id).prop("nodeName");
+    if (nodeName == "BUTTON" || nodeName == "INPUT") {
+        $(id).prop("disabled", false);
     }
     else {
-        $(id).css('pointer-events', 'auto');
+        $(id).css("pointer-events", "auto");
     }
 }
 export function CreateLoading(align) {
-    let classes = 'Loading';
-    if (align == 'center') {
-        classes += ' text-center';
+    let classes = "Loading";
+    if (align == "center") {
+        classes += " text-center";
     }
-    const loading = cc('div', {
-        text: 'Loading...',
+    const loading = cc("div", {
+        text: "Loading...",
         classes: classes,
     });
     loading.hide = () => {
@@ -54,10 +54,10 @@ export function CreateLoading(align) {
  * 当 max <= 0 时，不限制数量。
  */
 export function CreateAlerts(max) {
-    const alerts = cc('div');
+    const alerts = cc("div");
     alerts.max = max == undefined ? 3 : max;
     alerts.count = 0;
-    alerts.insertElem = elem => {
+    alerts.insertElem = (elem) => {
         $(alerts.id).prepend(elem);
         alerts.count++;
         if (alerts.max > 0 && alerts.count > alerts.max) {
@@ -65,18 +65,18 @@ export function CreateAlerts(max) {
         }
     };
     alerts.insert = (msgType, msg) => {
-        const time = dayjs().format('HH:mm:ss');
+        const time = dayjs().format("HH:mm:ss");
         const time_and_msg = `${time} ${msg}`;
-        if (msgType == 'danger') {
+        if (msgType == "danger") {
             console.log(time_and_msg);
         }
-        const elem = m('div')
+        const elem = m("div")
             .addClass(`alert alert-${msgType} my-1`)
             .append(span(time_and_msg));
         alerts.insertElem(elem);
     };
     alerts.clear = () => {
-        $(alerts.id).html('');
+        $(alerts.id).html("");
         return alerts;
     };
     return alerts;
@@ -92,7 +92,7 @@ export function ajax(options, onSuccess, onFail, onAlways, onReady) {
             return;
         }
         if (options.alerts) {
-            options.alerts.insert('danger', errMsg);
+            options.alerts.insert("danger", errMsg);
         }
         else {
             console.log(errMsg);
@@ -103,17 +103,17 @@ export function ajax(options, onSuccess, onFail, onAlways, onReady) {
     const xhr = new XMLHttpRequest();
     xhr.timeout = 10 * 1000;
     xhr.ontimeout = () => {
-        handleErr(xhr, 'timeout');
+        handleErr(xhr, "timeout");
     };
     if (options.responseType) {
         xhr.responseType = options.responseType;
     }
     else {
-        xhr.responseType = 'json';
+        xhr.responseType = "json";
     }
     xhr.open(options.method, options.url);
     xhr.onerror = () => {
-        handleErr(xhr, 'An error occurred during the transaction');
+        handleErr(xhr, "An error occurred during the transaction");
     };
     xhr.onreadystatechange = function () {
         onReady === null || onReady === void 0 ? void 0 : onReady(this);
@@ -125,7 +125,7 @@ export function ajax(options, onSuccess, onFail, onAlways, onReady) {
         }
         else {
             let errMsg = `${this.status}`;
-            if (this.responseType == 'text') {
+            if (this.responseType == "text") {
                 errMsg += ` ${this.responseText}`;
             }
             else {
@@ -140,11 +140,11 @@ export function ajax(options, onSuccess, onFail, onAlways, onReady) {
         onAlways === null || onAlways === void 0 ? void 0 : onAlways(this);
     };
     if (options.contentType) {
-        if (options.contentType == 'json')
-            options.contentType = 'application/json';
-        xhr.setRequestHeader('Content-Type', options.contentType);
+        if (options.contentType == "json")
+            options.contentType = "application/json";
+        xhr.setRequestHeader("Content-Type", options.contentType);
     }
-    if (options.contentType == 'application/json') {
+    if (options.contentType == "application/json") {
         xhr.send(JSON.stringify(options.body));
     }
     else if (options.body && !(options.body instanceof FormData)) {
@@ -165,15 +165,15 @@ export function ajaxPromise(options, n = 5) {
     const second = 1000;
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-            reject('timeout');
+            reject("timeout");
         }, n * second);
         ajax(options, 
         // onSuccess
-        result => {
+        (result) => {
             resolve(result);
         }, 
         // onError
-        errMsg => {
+        (errMsg) => {
             reject(errMsg);
         }, 
         // onAlways
@@ -183,8 +183,8 @@ export function ajaxPromise(options, n = 5) {
     });
 }
 export function val(obj, trim) {
-    let s = '';
-    if ('elem' in obj) {
+    let s = "";
+    if ("elem" in obj) {
         s = obj.elem().val();
     }
     else {
@@ -197,35 +197,43 @@ export function val(obj, trim) {
         return s;
     }
 }
+export function focus(obj) {
+    if ("elem" in obj) {
+        obj = obj.elem();
+    }
+    setTimeout(() => {
+        obj.trigger("focus");
+    }, 300);
+}
 export function itemID(id) {
     return `i${id}`;
 }
 export function LinkElem(href, options) {
     if (!options) {
-        return m('a').text(href).attr('href', href);
+        return m("a").text(href).attr("href", href);
     }
     if (!options.text)
         options.text = href;
-    const link = m('a').text(options.text).attr('href', href);
+    const link = m("a").text(options.text).attr("href", href);
     if (options.title)
-        link.attr('title', options.title);
+        link.attr("title", options.title);
     if (options.blank)
-        link.attr('target', '_blank');
+        link.attr("target", "_blank");
     return link;
 }
 export function create_textarea(rows = 3) {
-    return cc('textarea', { classes: 'form-textarea', attr: { rows: rows } });
+    return cc("textarea", { classes: "form-textarea", attr: { rows: rows } });
 }
-export function create_input(type = 'text') {
-    return cc('input', { attr: { type: type } });
+export function create_input(type = "text") {
+    return cc("input", { attr: { type: type } });
 }
-export function create_item(comp, name, description, classes = 'mb-3') {
-    return m('div')
+export function create_item(comp, name, description, classes = "mb-3") {
+    return m("div")
         .addClass(classes)
-        .append(m('label').addClass('form-label').attr({ for: comp.raw_id }).text(name), m(comp).addClass('form-textinput form-textinput-fat'), m('div').addClass('form-text').text(description));
+        .append(m("label").addClass("form-label").attr({ for: comp.raw_id }).text(name), m(comp).addClass("form-textinput form-textinput-fat"), m("div").addClass("form-text").text(description));
 }
 export function badge(name) {
-    return span(name).addClass('badge-grey');
+    return span(name).addClass("badge-grey");
 }
 /**
  * @param item is a checkbox or a radio button
@@ -233,14 +241,17 @@ export function badge(name) {
 export function create_check(item, label, title, value // 由于 value 通常等于 label，因此 value 不常用，放在最后
 ) {
     value = value ? value : label;
-    return m('div')
-        .addClass('form-check-inline')
-        .append(m(item).attr({ value: value, title: title }), m('label').text(label).attr({ for: item.raw_id, title: title }));
+    return m("div")
+        .addClass("form-check-inline")
+        .append(m(item).attr({ value: value, title: title }), m("label").text(label).attr({ for: item.raw_id, title: title }));
 }
-export function create_box(type, name, checked = '') {
+export function create_box(type, name, checked = "") {
     const c = checked ? true : false;
-    return cc('input', { attr: { type: type, name: name }, prop: { checked: c } });
+    return cc("input", {
+        attr: { type: type, name: name },
+        prop: { checked: c },
+    });
 }
 export function noCaseIndexOf(arr, s) {
-    return arr.findIndex(x => x.toLowerCase() === s.toLowerCase());
+    return arr.findIndex((x) => x.toLowerCase() === s.toLowerCase());
 }

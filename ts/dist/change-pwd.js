@@ -4,7 +4,7 @@ import * as util from './util.js';
 const Alerts = util.CreateAlerts();
 const titleArea = m('div')
     .addClass('text-center')
-    .append(m('h1').text("Change Master Password .. mima"));
+    .append(m('h2').text("Change Master Password .. mima"));
 $('#root').append(titleArea, m(Alerts));
 init();
 function init() {

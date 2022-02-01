@@ -69,6 +69,9 @@ func main() {
 		c.JSON(OK, isSignedIn(c))
 	})
 
+	r.GET("/sign-out", signOutHandler)
+	r.POST("/sign-in", signInHandler)
+
 	// api := r.Group("/api", Sleep(), CheckSignIn())
 	// {
 	// 	api.GET("/is-db-empty", isDatabaseEmpty)

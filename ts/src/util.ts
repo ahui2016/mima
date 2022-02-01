@@ -1,5 +1,5 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import {mjElement, mjComponent, m, cc, span} from './mj.js';
+import { mjElement, mjComponent, m, cc, span } from "./mj.js";
 
 export interface Text {
   message: string;
@@ -29,19 +29,19 @@ export interface Settings {
 // 获取地址栏的参数。
 export function getUrlParam(param: string): string {
   const queryString = new URLSearchParams(document.location.search);
-  return queryString.get(param) ?? '';
+  return queryString.get(param) ?? "";
 }
 
 /**
  * @param name is a mjComponent or the mjComponent's id
  */
 export function disable(name: string | mjComponent): void {
-  const id = typeof name == 'string' ? name : name.id;
-  const nodeName = $(id).prop('nodeName');
-  if (nodeName == 'BUTTON' || nodeName == 'INPUT') {
-    $(id).prop('disabled', true);
+  const id = typeof name == "string" ? name : name.id;
+  const nodeName = $(id).prop("nodeName");
+  if (nodeName == "BUTTON" || nodeName == "INPUT") {
+    $(id).prop("disabled", true);
   } else {
-    $(id).css('pointer-events', 'none');
+    $(id).css("pointer-events", "none");
   }
 }
 
@@ -49,12 +49,12 @@ export function disable(name: string | mjComponent): void {
  * @param name is a mjComponent or the mjComponent's id
  */
 export function enable(name: string | mjComponent): void {
-  const id = typeof name == 'string' ? name : name.id;
-  const nodeName = $(id).prop('nodeName');
-  if (nodeName == 'BUTTON' || nodeName == 'INPUT') {
-    $(id).prop('disabled', false);
+  const id = typeof name == "string" ? name : name.id;
+  const nodeName = $(id).prop("nodeName");
+  if (nodeName == "BUTTON" || nodeName == "INPUT") {
+    $(id).prop("disabled", false);
   } else {
-    $(id).css('pointer-events', 'auto');
+    $(id).css("pointer-events", "auto");
   }
 }
 
@@ -63,14 +63,14 @@ export interface mjLoading extends mjComponent {
   show: () => void;
 }
 
-export function CreateLoading(align?: 'center'): mjLoading {
-  let classes = 'Loading';
-  if (align == 'center') {
-    classes += ' text-center';
+export function CreateLoading(align?: "center"): mjLoading {
+  let classes = "Loading";
+  if (align == "center") {
+    classes += " text-center";
   }
 
-  const loading = cc('div', {
-    text: 'Loading...',
+  const loading = cc("div", {
+    text: "Loading...",
     classes: classes,
   }) as mjLoading;
 
@@ -87,7 +87,10 @@ export interface mjAlerts extends mjComponent {
   max: number;
   count: number;
   insertElem: (elem: mjElement) => void;
-  insert: (msgType: 'success' | 'danger' | 'info' | 'primary', msg: string) => void;
+  insert: (
+    msgType: "success" | "danger" | "info" | "primary",
+    msg: string
+  ) => void;
   clear: () => mjAlerts;
 }
 
@@ -96,11 +99,11 @@ export interface mjAlerts extends mjComponent {
  * 当 max <= 0 时，不限制数量。
  */
 export function CreateAlerts(max?: number): mjAlerts {
-  const alerts = cc('div') as mjAlerts;
+  const alerts = cc("div") as mjAlerts;
   alerts.max = max == undefined ? 3 : max;
   alerts.count = 0;
 
-  alerts.insertElem = elem => {
+  alerts.insertElem = (elem) => {
     $(alerts.id).prepend(elem);
     alerts.count++;
     if (alerts.max > 0 && alerts.count > alerts.max) {
@@ -109,19 +112,19 @@ export function CreateAlerts(max?: number): mjAlerts {
   };
 
   alerts.insert = (msgType, msg) => {
-    const time = dayjs().format('HH:mm:ss');
+    const time = dayjs().format("HH:mm:ss");
     const time_and_msg = `${time} ${msg}`;
-    if (msgType == 'danger') {
+    if (msgType == "danger") {
       console.log(time_and_msg);
     }
-    const elem = m('div')
+    const elem = m("div")
       .addClass(`alert alert-${msgType} my-1`)
       .append(span(time_and_msg));
     alerts.insertElem(elem);
   };
 
   alerts.clear = () => {
-    $(alerts.id).html('');
+    $(alerts.id).html("");
     return alerts;
   };
 
@@ -155,7 +158,7 @@ export function ajax(
       return;
     }
     if (options.alerts) {
-      options.alerts.insert('danger', errMsg);
+      options.alerts.insert("danger", errMsg);
     } else {
       console.log(errMsg);
     }
@@ -167,19 +170,19 @@ export function ajax(
 
   xhr.timeout = 10 * 1000;
   xhr.ontimeout = () => {
-    handleErr(xhr, 'timeout');
+    handleErr(xhr, "timeout");
   };
 
   if (options.responseType) {
     xhr.responseType = options.responseType;
   } else {
-    xhr.responseType = 'json';
+    xhr.responseType = "json";
   }
 
   xhr.open(options.method, options.url);
 
   xhr.onerror = () => {
-    handleErr(xhr, 'An error occurred during the transaction');
+    handleErr(xhr, "An error occurred during the transaction");
   };
 
   xhr.onreadystatechange = function () {
@@ -191,7 +194,7 @@ export function ajax(
       onSuccess?.(this.response);
     } else {
       let errMsg = `${this.status}`;
-      if (this.responseType == 'text') {
+      if (this.responseType == "text") {
         errMsg += ` ${this.responseText}`;
       } else {
         errMsg += ` ${this.response?.message!}`;
@@ -206,11 +209,11 @@ export function ajax(
   };
 
   if (options.contentType) {
-    if (options.contentType == 'json') options.contentType = 'application/json';
-    xhr.setRequestHeader('Content-Type', options.contentType);
+    if (options.contentType == "json") options.contentType = "application/json";
+    xhr.setRequestHeader("Content-Type", options.contentType);
   }
 
-  if (options.contentType == 'application/json') {
+  if (options.contentType == "application/json") {
     xhr.send(JSON.stringify(options.body));
   } else if (options.body && !(options.body instanceof FormData)) {
     const body = new FormData();
@@ -230,16 +233,16 @@ export function ajaxPromise(options: AjaxOptions, n: number = 5): Promise<any> {
   const second = 1000;
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
-      reject('timeout');
+      reject("timeout");
     }, n * second);
     ajax(
       options,
       // onSuccess
-      result => {
+      (result) => {
         resolve(result);
       },
       // onError
-      errMsg => {
+      (errMsg) => {
         reject(errMsg);
       },
       // onAlways
@@ -250,9 +253,9 @@ export function ajaxPromise(options: AjaxOptions, n: number = 5): Promise<any> {
   });
 }
 
-export function val(obj: mjElement | mjComponent, trim?: 'trim'): string {
-  let s = '';
-  if ('elem' in obj) {
+export function val(obj: mjElement | mjComponent, trim?: "trim"): string {
+  let s = "";
+  if ("elem" in obj) {
     s = obj.elem().val() as string;
   } else {
     s = obj.val() as string;
@@ -265,11 +268,12 @@ export function val(obj: mjElement | mjComponent, trim?: 'trim'): string {
 }
 
 export function focus(obj: mjElement | mjComponent): void {
-  if ('elem' in obj) {
-    obj.elem().trigger('focus');
-  } else {
-    obj.trigger('focus');
+  if ("elem" in obj) {
+    obj = obj.elem();
   }
+  setTimeout(() => {
+    (obj as mjElement).trigger("focus");
+  }, 300);
 }
 
 export function itemID(id: string): string {
@@ -283,38 +287,38 @@ interface LinkOptions {
 }
 export function LinkElem(href: string, options?: LinkOptions): mjElement {
   if (!options) {
-    return m('a').text(href).attr('href', href);
+    return m("a").text(href).attr("href", href);
   }
   if (!options.text) options.text = href;
-  const link = m('a').text(options.text).attr('href', href);
-  if (options.title) link.attr('title', options.title);
-  if (options.blank) link.attr('target', '_blank');
+  const link = m("a").text(options.text).attr("href", href);
+  if (options.title) link.attr("title", options.title);
+  if (options.blank) link.attr("target", "_blank");
   return link;
 }
 
 export function create_textarea(rows: number = 3): mjComponent {
-  return cc('textarea', {classes: 'form-textarea', attr: {rows: rows}});
+  return cc("textarea", { classes: "form-textarea", attr: { rows: rows } });
 }
-export function create_input(type: string = 'text'): mjComponent {
-  return cc('input', {attr: {type: type}});
+export function create_input(type: string = "text"): mjComponent {
+  return cc("input", { attr: { type: type } });
 }
 export function create_item(
   comp: mjComponent,
   name: string,
   description: string,
-  classes = 'mb-3'
+  classes = "mb-3"
 ): mjElement {
-  return m('div')
+  return m("div")
     .addClass(classes)
     .append(
-      m('label').addClass('form-label').attr({for: comp.raw_id}).text(name),
-      m(comp).addClass('form-textinput form-textinput-fat'),
-      m('div').addClass('form-text').text(description)
+      m("label").addClass("form-label").attr({ for: comp.raw_id }).text(name),
+      m(comp).addClass("form-textinput form-textinput-fat"),
+      m("div").addClass("form-text").text(description)
     );
 }
 
 export function badge(name: string): mjElement {
-  return span(name).addClass('badge-grey');
+  return span(name).addClass("badge-grey");
 }
 
 /**
@@ -327,23 +331,26 @@ export function create_check(
   value?: string // 由于 value 通常等于 label，因此 value 不常用，放在最后
 ): mjElement {
   value = value ? value : label;
-  return m('div')
-    .addClass('form-check-inline')
+  return m("div")
+    .addClass("form-check-inline")
     .append(
-      m(item).attr({value: value, title: title}),
-      m('label').text(label).attr({for: item.raw_id, title: title})
+      m(item).attr({ value: value, title: title }),
+      m("label").text(label).attr({ for: item.raw_id, title: title })
     );
 }
 
 export function create_box(
-  type: 'checkbox' | 'radio',
+  type: "checkbox" | "radio",
   name: string,
-  checked: 'checked' | '' = ''
+  checked: "checked" | "" = ""
 ): mjComponent {
   const c = checked ? true : false;
-  return cc('input', {attr: {type: type, name: name}, prop: {checked: c}});
+  return cc("input", {
+    attr: { type: type, name: name },
+    prop: { checked: c },
+  });
 }
 
 export function noCaseIndexOf(arr: string[], s: string): number {
-  return arr.findIndex(x => x.toLowerCase() === s.toLowerCase());
+  return arr.findIndex((x) => x.toLowerCase() === s.toLowerCase());
 }

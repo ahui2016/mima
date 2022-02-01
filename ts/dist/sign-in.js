@@ -14,11 +14,64 @@ const GotoChangePwd = cc("div", {
         m("div").append("前往修改密码 ➡ ", util.LinkElem("/public/change-pwd.html")),
     ],
 });
-const Form = cc("div", { text: "The sign-in form" });
-$("#root").append(titleArea, m(Loading).hide(), m(Alerts), m(GotoChangePwd).hide(), m(Form).hide());
+const PwdInput = cc("input");
+const SubmitBtn = cc("button");
+const SignInForm = cc("form", {
+    children: [
+        m("label").text("Master Password").attr({ for: PwdInput.raw_id }),
+        m("div").append([
+            m(PwdInput).attr({ type: "password" }),
+            m(SubmitBtn)
+                .text("Sign in")
+                .on("click", (event) => {
+                event.preventDefault();
+                const pwd = util.val(PwdInput);
+                if (!pwd) {
+                    util.focus(PwdInput);
+                    return;
+                }
+                util.ajax({
+                    method: "POST",
+                    url: "/sign-in",
+                    alerts: Alerts,
+                    buttonID: SubmitBtn.id,
+                    body: { password: pwd },
+                }, () => {
+                    SignInForm.elem().hide();
+                    Alerts.clear().insert("success", "成功登入");
+                }, (that, errMsg) => {
+                    if (that.status == 401) {
+                        Alerts.insert("danger", "密码错误");
+                    }
+                    else {
+                        Alerts.insert("danger", errMsg);
+                    }
+                }, () => {
+                    util.focus(PwdInput);
+                });
+            }),
+        ]),
+    ],
+});
+$("#root").append(titleArea, m(Loading).hide(), m(SignInForm).hide(), m(Alerts), m(GotoChangePwd).hide());
 init();
 function init() {
-    checkDefaultPwd();
+    checkSignIn();
+}
+function checkSignIn() {
+    util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
+        const yes = resp;
+        if (!yes) {
+            checkDefaultPwd();
+        }
+        else {
+            Alerts.insert('success', '已经登入');
+        }
+    }),
+        undefined,
+        () => {
+            Loading.hide();
+        };
 }
 function checkDefaultPwd() {
     util.ajax({ method: "GET", url: "/is-default-pwd", alerts: Alerts }, (resp) => {
@@ -27,11 +80,8 @@ function checkDefaultPwd() {
             GotoChangePwd.elem().show();
         }
         else {
-            Form.elem().show();
+            SignInForm.elem().show();
+            util.focus(PwdInput);
         }
-    }),
-        undefined,
-        () => {
-            Loading.hide();
-        };
+    });
 }
