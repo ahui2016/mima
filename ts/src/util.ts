@@ -125,6 +125,7 @@ export function CreateAlerts(max?: number): mjAlerts {
 
   alerts.clear = () => {
     $(alerts.id).html("");
+    alerts.count = 0;
     return alerts;
   };
 

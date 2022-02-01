@@ -14,6 +14,28 @@ const GotoChangePwd = cc("div", {
         m("div").append("前往修改密码 ➡ ", util.LinkElem("/public/change-pwd.html")),
     ],
 });
+const SignOutBtn = cc("button");
+const SignOutArea = cc("div", {
+    children: [
+        m(SignOutBtn)
+            .text("Sign out")
+            .on("click", (event) => {
+            event.preventDefault();
+            util.ajax({
+                method: "GET",
+                url: "/sign-out",
+                alerts: Alerts,
+                buttonID: SignOutBtn.id,
+            }, () => {
+                Alerts.clear().insert("danger", "已登出");
+                SignOutArea.elem().hide();
+                SignInForm.elem().show();
+                PwdInput.elem().val('');
+                util.focus(PwdInput);
+            });
+        }),
+    ],
+});
 const PwdInput = cc("input");
 const SubmitBtn = cc("button");
 const SignInForm = cc("form", {
@@ -38,7 +60,8 @@ const SignInForm = cc("form", {
                     body: { password: pwd },
                 }, () => {
                     SignInForm.elem().hide();
-                    Alerts.clear().insert("success", "成功登入");
+                    Alerts.clear().insert('success', '成功登入');
+                    SignOutArea.elem().show();
                 }, (that, errMsg) => {
                     if (that.status == 401) {
                         Alerts.insert("danger", "密码错误");
@@ -53,7 +76,7 @@ const SignInForm = cc("form", {
         ]),
     ],
 });
-$("#root").append(titleArea, m(Loading).hide(), m(SignInForm).hide(), m(Alerts), m(GotoChangePwd).hide());
+$("#root").append(titleArea, m(Loading).hide(), m(SignInForm).hide(), m(Alerts), m(SignOutArea).hide(), m(GotoChangePwd).hide());
 init();
 function init() {
     checkSignIn();
@@ -61,11 +84,12 @@ function init() {
 function checkSignIn() {
     util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
         const yes = resp;
-        if (!yes) {
-            checkDefaultPwd();
+        if (yes) {
+            Alerts.insert('success', '已登入');
+            SignOutArea.elem().show();
         }
         else {
-            Alerts.insert('success', '已经登入');
+            checkDefaultPwd();
         }
     }),
         undefined,

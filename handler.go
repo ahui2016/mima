@@ -73,7 +73,10 @@ func signInHandler(c *gin.Context) {
 	c.Bind(&form)
 
 	ip := c.ClientIP()
-	util.Panic(checkIPTryCount(ip))
+	if err := checkIPTryCount(ip); err != nil {
+		c.JSON(http.StatusForbidden, Text{err.Error()})
+		return
+	}
 	yes, err := db.CheckPassword(form.Password)
 	util.Panic(err)
 	if !yes {

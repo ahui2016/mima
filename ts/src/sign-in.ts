@@ -21,6 +21,33 @@ const GotoChangePwd = cc("div", {
   ],
 });
 
+const SignOutBtn = cc("button");
+
+const SignOutArea = cc("div", {
+  children: [
+    m(SignOutBtn)
+      .text("Sign out")
+      .on("click", (event) => {
+        event.preventDefault();
+        util.ajax(
+          {
+            method: "GET",
+            url: "/sign-out",
+            alerts: Alerts,
+            buttonID: SignOutBtn.id,
+          },
+          () => {
+            Alerts.clear().insert("danger", "已登出");
+            SignOutArea.elem().hide();
+            SignInForm.elem().show();
+            PwdInput.elem().val('');
+            util.focus(PwdInput);
+          }
+        );
+      }),
+  ],
+});
+
 const PwdInput = cc("input");
 const SubmitBtn = cc("button");
 
@@ -48,7 +75,8 @@ const SignInForm = cc("form", {
             },
             () => {
               SignInForm.elem().hide();
-              Alerts.clear().insert("success", "成功登入");
+              Alerts.clear().insert('success', '成功登入');
+              SignOutArea.elem().show();
             },
             (that, errMsg) => {
               if (that.status == 401) {
@@ -71,7 +99,8 @@ $("#root").append(
   m(Loading).hide(),
   m(SignInForm).hide(),
   m(Alerts),
-  m(GotoChangePwd).hide(),
+  m(SignOutArea).hide(),
+  m(GotoChangePwd).hide()
 );
 
 init();
@@ -83,10 +112,11 @@ function init() {
 function checkSignIn() {
   util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
     const yes = resp as boolean;
-    if (!yes) {
-      checkDefaultPwd();
+    if (yes) {
+      Alerts.insert('success', '已登入');
+      SignOutArea.elem().show();
     } else {
-      Alerts.insert('success', '已经登入');
+      checkDefaultPwd();
     }
   }),
     undefined,

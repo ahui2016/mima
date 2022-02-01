@@ -77,6 +77,7 @@ export function CreateAlerts(max) {
     };
     alerts.clear = () => {
         $(alerts.id).html("");
+        alerts.count = 0;
         return alerts;
     };
     return alerts;
