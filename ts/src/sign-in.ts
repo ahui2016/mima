@@ -32,15 +32,14 @@ const SignOutArea = cc("div", {
         util.ajax(
           {
             method: "GET",
-            url: "/sign-out",
+            url: "/auth/sign-out",
             alerts: Alerts,
             buttonID: SignOutBtn.id,
           },
           () => {
-            Alerts.clear().insert("danger", "已登出");
+            Alerts.clear().insert("info", "已登出");
             SignOutArea.elem().hide();
             SignInForm.elem().show();
-            PwdInput.elem().val('');
             util.focus(PwdInput);
           }
         );
@@ -48,55 +47,57 @@ const SignOutArea = cc("div", {
   ],
 });
 
-const PwdInput = cc("input");
-const SubmitBtn = cc("button");
+// https://www.chromium.org/developers/design-documents/form-styles-that-chromium-understands/
+const UsernameInput = cc("input", { attr: { autocomplete: "username" } });
+const PwdInput = cc("input", { attr: { autocomplete: "current-password" } });
+const SubmitBtn = cc("button", {text:"Sign in"});
 
 const SignInForm = cc("form", {
   children: [
     m("label").text("Master Password").attr({ for: PwdInput.raw_id }),
-    m("div").append([
+    m("div").append(
+      m(UsernameInput).hide(),
       m(PwdInput).attr({ type: "password" }),
-      m(SubmitBtn)
-        .text("Sign in")
-        .on("click", (event) => {
-          event.preventDefault();
-          const pwd = util.val(PwdInput);
-          if (!pwd) {
-            util.focus(PwdInput);
-            return;
-          }
-          util.ajax(
-            {
-              method: "POST",
-              url: "/sign-in",
-              alerts: Alerts,
-              buttonID: SubmitBtn.id,
-              body: { password: pwd },
-            },
-            () => {
-              SignInForm.elem().hide();
-              Alerts.clear().insert('success', '成功登入');
-              SignOutArea.elem().show();
-            },
-            (that, errMsg) => {
-              if (that.status == 401) {
-                Alerts.insert("danger", "密码错误");
-              } else {
-                Alerts.insert("danger", errMsg);
-              }
-            },
-            () => {
-              util.focus(PwdInput);
+      m(SubmitBtn).on("click", (event) => {
+        event.preventDefault();
+        const pwd = util.val(PwdInput);
+        if (!pwd) {
+          util.focus(PwdInput);
+          return;
+        }
+        util.ajax(
+          {
+            method: "POST",
+            url: "/auth/sign-in",
+            alerts: Alerts,
+            buttonID: SubmitBtn.id,
+            body: { password: pwd },
+          },
+          () => {
+            PwdInput.elem().val("");
+            SignInForm.elem().hide();
+            Alerts.clear().insert("success", "成功登入");
+            SignOutArea.elem().show();
+          },
+          (that, errMsg) => {
+            if (that.status == 401) {
+              Alerts.insert("danger", "密码错误");
+            } else {
+              Alerts.insert("danger", errMsg);
             }
-          );
-        }),
-    ]),
+          },
+          () => {
+            util.focus(PwdInput);
+          }
+        );
+      })
+    ),
   ],
 });
 
 $("#root").append(
   titleArea,
-  m(Loading).hide(),
+  m(Loading),
   m(SignInForm).hide(),
   m(Alerts),
   m(SignOutArea).hide(),
@@ -110,24 +111,24 @@ function init() {
 }
 
 function checkSignIn() {
-  util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
-    const yes = resp as boolean;
-    if (yes) {
-      Alerts.insert('success', '已登入');
-      SignOutArea.elem().show();
-    } else {
-      checkDefaultPwd();
+  util.ajax(
+    { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
+    (resp) => {
+      const yes = resp as boolean;
+      if (yes) {
+        Alerts.insert("info", "已登入");
+        SignOutArea.elem().show();
+        Loading.hide();
+      } else {
+        checkDefaultPwd();
+      }
     }
-  }),
-    undefined,
-    () => {
-      Loading.hide();
-    };
+  );
 }
 
 function checkDefaultPwd() {
   util.ajax(
-    { method: "GET", url: "/is-default-pwd", alerts: Alerts },
+    { method: "GET", url: "/auth/is-default-pwd", alerts: Alerts },
     (resp) => {
       const yes = resp as boolean;
       if (yes) {
@@ -136,6 +137,10 @@ function checkDefaultPwd() {
         SignInForm.elem().show();
         util.focus(PwdInput);
       }
+    },
+    undefined,
+    () => {
+      Loading.hide();
     }
   );
 }

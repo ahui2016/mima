@@ -16,7 +16,7 @@ function init() {
     checkSignIn();
 }
 function checkSignIn() {
-    util.ajax({ method: "GET", url: "/is-signed-in", alerts: Alerts }, (resp) => {
+    util.ajax({ method: "GET", url: "/auth/is-signed-in", alerts: Alerts }, (resp) => {
         const yes = resp;
         if (!yes) {
             GotoSignIn.elem().show();

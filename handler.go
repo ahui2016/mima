@@ -20,6 +20,10 @@ type Text struct {
 	Message string `json:"message"`
 }
 
+func Err(err error) Text {
+	return Text{err.Error()}
+}
+
 type Number struct {
 	N int64 `json:"n"`
 }
@@ -72,19 +76,9 @@ func signInHandler(c *gin.Context) {
 	var form SignInForm
 	c.Bind(&form)
 
-	ip := c.ClientIP()
-	if err := checkIPTryCount(ip); err != nil {
-		c.JSON(http.StatusForbidden, Text{err.Error()})
+	if checkPasswordAndIP(c, form.Password) {
 		return
 	}
-	yes, err := db.CheckPassword(form.Password)
-	util.Panic(err)
-	if !yes {
-		ipTryCount[ip]++
-		c.Status(http.StatusUnauthorized)
-		return
-	}
-	ipTryCount[ip] = 0
 
 	options := newNormalOptions()
 	session := sessions.Default(c)
@@ -97,4 +91,31 @@ func signOutHandler(c *gin.Context) {
 	session := sessions.Default(c)
 	util.Panic(sessionSet(session, false, options))
 	c.Status(OK)
+}
+
+func isDefaultPwd(c *gin.Context) {
+	if *demo {
+		// demo 允许使用默认密码，因此不需要提示前端修改密码。
+		c.JSON(OK, false)
+		return
+	}
+	yes, err := db.IsDefaultPwd()
+	util.Panic(err)
+	c.JSON(OK, yes)
+}
+
+func changePwdHandler(c *gin.Context) {
+	type ChangePwdForm struct {
+		CurrentPwd string `form:"oldpwd" binding:"required"`
+		NewPwd     string `form:"newpwd" binding:"required"`
+	}
+	var form ChangePwdForm
+	c.Bind(&form)
+
+	if checkPasswordAndIP(c, form.CurrentPwd) {
+		return
+	}
+	if err := db.ChangePassword(form.CurrentPwd, form.NewPwd); err != nil {
+		c.JSON(500, Err(err))
+	}
 }

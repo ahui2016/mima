@@ -9,5 +9,8 @@
   .alert-primary {
     color: black;
   }
+  .alert-info {
+    color: blue;
+  }
 
 }

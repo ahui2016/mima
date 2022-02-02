@@ -25,6 +25,7 @@ const UpdateTextValue = `UPDATE metadata SET text_value=? WHERE name=?;`
 
 const InsertSealed = `INSERT INTO sealed_mima (id, secret) VALUES (?, ?);`
 const GetSealedByID = `SELECT * FROM sealed_mima WHERE id=?;`
+const UpdateSealed = `UPDATE sealed_mima SET secret=? WHERE id=?;`
 
 const CreateTempTables = `
 CREATE TABLE IF NOT EXISTS mima

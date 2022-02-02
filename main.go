@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"ahui2016.github.com/mima/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -54,23 +53,16 @@ func main() {
 		c.Redirect(http.StatusFound, "/public/index.html")
 	})
 
-	r.GET("/is-default-pwd", func(c *gin.Context) {
-		if *demo {
-			// demo 允许使用默认密码，因此不需要提示前端修改密码。
-			c.JSON(OK, false)
-			return
-		}
-		yes, err := db.IsDefaultPwd()
-		util.Panic(err)
-		c.JSON(OK, yes)
-	})
-
-	r.GET("/is-signed-in", func(c *gin.Context) {
-		c.JSON(OK, isSignedIn(c))
-	})
-
-	r.GET("/sign-out", signOutHandler)
-	r.POST("/sign-in", signInHandler)
+	auth := r.Group("/auth", Sleep())
+	{
+		auth.GET("/sign-out", signOutHandler)
+		auth.POST("/sign-in", signInHandler)
+		auth.GET("/is-signed-in", func(c *gin.Context) {
+			c.JSON(OK, isSignedIn(c))
+		})
+		auth.GET("/is-default-pwd", isDefaultPwd)
+		auth.POST("/change-pwd", changePwdHandler)
+	}
 
 	// api := r.Group("/api", Sleep(), CheckSignIn())
 	// {

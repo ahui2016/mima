@@ -30,6 +30,24 @@ func checkIPTryCount(ip string) error {
 	return nil
 }
 
+// checkPasswordAndIP 检查 IP 与密码，返回 true 表示需要结束函数。
+func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
+	ip := c.ClientIP()
+	if err := checkIPTryCount(ip); err != nil {
+		c.JSON(http.StatusTooManyRequests, Err(err))
+		return true
+	}
+	yes, err := db.CheckPassword(pwd)
+	util.Panic(err)
+	if !yes {
+		ipTryCount[ip]++
+		c.JSON(http.StatusUnauthorized, Text{"wrong password"})
+		return true
+	}
+	ipTryCount[ip] = 0
+	return false
+}
+
 func isSignedIn(c *gin.Context) bool {
 	session := sessions.Default(c)
 	yes, _ := session.Get(cookieSignIn).(bool)

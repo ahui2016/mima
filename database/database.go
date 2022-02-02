@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"ahui2016.github.com/mima/model"
 	"ahui2016.github.com/mima/stmt"
@@ -89,8 +91,8 @@ func (db *DB) InitFirstMima(password string) error {
 		Password: util.Base64Encode(db.key[:]),
 		CTime:    util.TimeNow(),
 	}
-	m_w_h := MimaWithHistory{Mima: m}
-	sm, err := db.EncryptFirst(m_w_h)
+	mwh := MimaWithHistory{Mima: m}
+	sm, err := db.EncryptFirst(mwh)
 	if err != nil {
 		return err
 	}
@@ -114,18 +116,21 @@ func (db *DB) IsDefaultPwd() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// 只有当未登入时才会使用本函数，因此可大胆修改 db.userKey
 	db.userKey = sha256.Sum256([]byte(defaultPassword))
-	if err = db.decryptFirst(sm); err != nil {
+	if _, err = db.decryptFirst(sm); err != nil {
+		db.userKey = blankKey // 必须恢复
 		return false, nil
 	}
 	return true, nil
 }
 
 // CheckPassword returns true if the pwd is correct.
+// It also sets db.userKey and db.key if the pwd is correct.
 func (db *DB) CheckPassword(pwd string) (bool, error) {
 	if db.userKey != blankKey {
 		key := sha256.Sum256([]byte(pwd))
+		log.Print(db.userKey)
+		log.Print(key)
 		return db.userKey == key, nil
 	}
 	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
@@ -134,8 +139,8 @@ func (db *DB) CheckPassword(pwd string) (bool, error) {
 		return false, err
 	}
 	db.userKey = sha256.Sum256([]byte(pwd))
-	if err = db.decryptFirst(sm); err != nil {
-		db.userKey = blankKey // 要记得重置
+	if _, err = db.decryptFirst(sm); err != nil {
+		db.userKey = blankKey // 必须恢复
 		return false, nil
 	}
 	return true, nil
@@ -163,21 +168,63 @@ func mwhToSM(mwh MimaWithHistory, key SecretKey) (sm SealedMima, err error) {
 }
 
 // decryptFirst decrypts the first mima and set db.key
-func (db *DB) decryptFirst(firstMima SealedMima) error {
-	mwh, err := decrypt(firstMima.Secret, db.userKey)
+func (db *DB) decryptFirst(firstMima SealedMima) (mwh MimaWithHistory, err error) {
+	mwh, err = decrypt(firstMima.Secret, db.userKey)
 	if err != nil {
-		return err
+		return
 	}
 	keySlice, err := util.Base64Decode(mwh.Password)
 	if err != nil {
-		return err
+		return
 	}
 	db.key = bytesToKey(keySlice)
-	return nil
+	return
 }
 
 func (db *DB) decrypt(sm SealedMima) (MimaWithHistory, error) {
 	return decrypt(sm.Secret, db.key)
+}
+
+// ChangePassword 修改密码，其中 oldPwd 由于涉及 ip 尝试次数，因此应在
+// 使用本函数前使用 db.CheckPassword 验证 oldPwd.
+func (db *DB) ChangePassword(oldPwd, newPwd string) error {
+	if oldPwd == "" {
+		return fmt.Errorf("the current password is empty")
+	}
+	if newPwd == "" {
+		return fmt.Errorf("the new password is empty")
+	}
+	if newPwd == defaultPassword {
+		return fmt.Errorf("cannot set password to '%s'", defaultPassword)
+	}
+	if newPwd == oldPwd {
+		return fmt.Errorf("the new password is equal to the current password")
+	}
+
+	// Get the first sealed mima.
+	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
+	sm, err := scanSealed(row)
+	if err != nil {
+		return err
+	}
+	mwh, err := db.decryptFirst(sm)
+	if err != nil {
+		return err
+	}
+
+	// Use the new password to encrypt.
+	currentUserKey := db.userKey
+	db.userKey = sha256.Sum256([]byte(newPwd))
+	sm, err = db.EncryptFirst(mwh)
+	if err != nil {
+		db.userKey = currentUserKey // 必须恢复
+		return err
+	}
+	if err = updateSealed(db.DB, sm); err != nil {
+		db.userKey = currentUserKey // 必须恢复
+		return err
+	}
+	return nil
 }
 
 func (db *DB) InsertMima(mima Mima) (err error) {

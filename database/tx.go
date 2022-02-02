@@ -39,6 +39,15 @@ func insertSealed(tx TX, sm SealedMima) error {
 	return err
 }
 
+func updateSealed(tx TX, sm SealedMima) error {
+	_, err := tx.Exec(
+		stmt.UpdateSealed,
+		sm.Secret,
+		sm.ID,
+	)
+	return err
+}
+
 func scanSealed(row Row) (sm SealedMima, err error) {
 	err = row.Scan(
 		&sm.ID,
