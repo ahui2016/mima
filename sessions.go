@@ -34,7 +34,7 @@ func checkIPTryCount(ip string) error {
 func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
 	ip := c.ClientIP()
 	if err := checkIPTryCount(ip); err != nil {
-		c.JSON(http.StatusTooManyRequests, Err(err))
+		c.JSON(http.StatusTooManyRequests, Text{err.Error()})
 		return true
 	}
 	yes, err := db.CheckPassword(pwd)
@@ -57,7 +57,7 @@ func isSignedIn(c *gin.Context) bool {
 func CheckSignIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !isSignedIn(c) {
-			c.Status(http.StatusUnauthorized)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, Text{"require sign-in"})
 			return
 		}
 		c.Next()

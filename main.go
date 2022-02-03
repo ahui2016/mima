@@ -67,6 +67,7 @@ func main() {
 	api := r.Group("/api", Sleep(), CheckSignIn())
 	{
 		api.POST("/add", addHandler)
+		api.POST("/get-mima", getMimaHandler)
 	}
 
 	if err := r.Run(*addr); err != nil {

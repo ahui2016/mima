@@ -249,3 +249,12 @@ func (db *DB) SealedInsert(m *Mima) (err error) {
 	}
 	return insertMima(db.TempDB, *m)
 }
+
+func (db *DB) GetMWH(id string) (_ MimaWithHistory, err error) {
+	row := db.DB.QueryRow(stmt.GetSealedByID, id)
+	sm, err := scanSealed(row)
+	if err != nil {
+		return
+	}
+	return decrypt(sm.Secret, db.key)
+}

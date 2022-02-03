@@ -7,19 +7,29 @@ export interface Text {
 export interface Num {
   n: number;
 }
-export interface Word {
-  ID: string; // ShortID
-  CN: string;
-  EN: string;
-  JP: string;
-  Kana: string; // 与 JP 对应的平假名
-  Other: string; // 其他任何语种
-  Label: string; // 每个单词只有一个标签，通常用来记录出处（书名或文章名）
+
+export interface History {
+  ID: string; // random id
+  MimaID: string; // Mima.ID
+  Title: string;
+  Username: string;
+  Password: string;
   Notes: string;
-  Links: string; // 用换行符分隔的网址
-  Images: string; // 用逗号分隔的图片 ID, 与 localtags 搭配使用
-  CTime: number;
+  CTime: number; // 创建日期
 }
+
+export interface MimaWithHistory {
+  ID: string; // ShortID
+  Title: string;
+  Label: string;
+  Username: string;
+  Password: string;
+  Notes: string;
+  CTime: number; // 创建日期
+  MTime: number; // 修改日期
+  History: History[]
+}
+
 export interface Settings {
   DictplusAddr: string;
   LocaltagsAddr: string;

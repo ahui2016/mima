@@ -21,8 +21,21 @@ type Text struct {
 	Message string `json:"message"`
 }
 
-func Err(err error) Text {
-	return Text{err.Error()}
+func Err(c *gin.Context, err error) bool {
+	if err != nil {
+		c.JSON(500, Text{err.Error()})
+		return true
+	}
+	return false
+}
+
+// BindCheck binds an obj, returns true if err != nil.
+func BindCheck(c *gin.Context, obj interface{}) bool {
+	if err := c.ShouldBind(obj); err != nil {
+		c.JSON(400, Text{err.Error()})
+		return true
+	}
+	return false
 }
 
 type Number struct {
@@ -50,7 +63,9 @@ func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 func Sleep() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		s, err := db.GetSettings()
-		util.Panic(err)
+		if Err(c, err) {
+			return
+		}
 		if s.Delay {
 			time.Sleep(time.Second)
 		}
@@ -75,22 +90,27 @@ func signInHandler(c *gin.Context) {
 		Password string `form:"password" binding:"required"`
 	}
 	var form SignInForm
-	c.Bind(&form)
-
+	if BindCheck(c, &form) {
+		return
+	}
 	if checkPasswordAndIP(c, form.Password) {
 		return
 	}
 
 	options := newNormalOptions()
 	session := sessions.Default(c)
-	util.Panic(sessionSet(session, true, options))
+	if Err(c, sessionSet(session, true, options)) {
+		return
+	}
 	c.Status(OK)
 }
 
 func signOutHandler(c *gin.Context) {
 	options := newExpireOptions()
 	session := sessions.Default(c)
-	util.Panic(sessionSet(session, false, options))
+	if Err(c, sessionSet(session, false, options)) {
+		return
+	}
 	c.Status(OK)
 }
 
@@ -101,7 +121,9 @@ func isDefaultPwd(c *gin.Context) {
 		return
 	}
 	yes, err := db.IsDefaultPwd()
-	util.Panic(err)
+	if Err(c, err) {
+		return
+	}
 	c.JSON(OK, yes)
 }
 
@@ -111,13 +133,15 @@ func changePwdHandler(c *gin.Context) {
 		NewPwd     string `form:"newpwd" binding:"required"`
 	}
 	var form ChangePwdForm
-	c.Bind(&form)
+	if BindCheck(c, &form) {
+		return
+	}
 
 	if checkPasswordAndIP(c, form.CurrentPwd) {
 		return
 	}
-	if err := db.ChangePassword(form.CurrentPwd, form.NewPwd); err != nil {
-		c.JSON(500, Err(err))
+	if Err(c, db.ChangePassword(form.CurrentPwd, form.NewPwd)) {
+		return
 	}
 }
 
@@ -125,8 +149,23 @@ func addHandler(c *gin.Context) {
 	var form model.EditForm
 	c.Bind(&form)
 	m := model.NewFrom(form)
-	if err := db.SealedInsert(&m); err != nil {
-		c.JSON(500, Err(err))
+	if Err(c, db.SealedInsert(&m)) {
+		return
 	}
 	c.JSON(OK, Text{m.ID})
+}
+
+func getMimaHandler(c *gin.Context) {
+	type idForm struct {
+		ID string `form:"id" binding:"required"`
+	}
+	var form idForm
+	if BindCheck(c, &form) {
+		return
+	}
+	mwh, err := db.GetMWH(form.ID)
+	if Err(c, err) {
+		return
+	}
+	c.JSON(OK, mwh)
 }
