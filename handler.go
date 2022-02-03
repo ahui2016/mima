@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"ahui2016.github.com/mima/model"
 	"ahui2016.github.com/mima/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/static"
@@ -118,4 +119,14 @@ func changePwdHandler(c *gin.Context) {
 	if err := db.ChangePassword(form.CurrentPwd, form.NewPwd); err != nil {
 		c.JSON(500, Err(err))
 	}
+}
+
+func addHandler(c *gin.Context) {
+	var form model.EditForm
+	c.Bind(&form)
+	m := model.NewFrom(form)
+	if err := db.SealedInsert(&m); err != nil {
+		c.JSON(500, Err(err))
+	}
+	c.JSON(OK, Text{m.ID})
 }

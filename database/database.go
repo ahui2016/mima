@@ -42,6 +42,12 @@ type DB struct {
 }
 
 func (db *DB) mustBegin() *sql.Tx {
+	tx, err := db.TempDB.Begin()
+	util.Panic(err)
+	return tx
+}
+
+func (db *DB) sealedMustBegin() *sql.Tx {
 	tx, err := db.DB.Begin()
 	util.Panic(err)
 	return tx
@@ -91,8 +97,7 @@ func (db *DB) InitFirstMima(password string) error {
 		Password: util.Base64Encode(db.key[:]),
 		CTime:    util.TimeNow(),
 	}
-	mwh := MimaWithHistory{Mima: m}
-	sm, err := db.EncryptFirst(mwh)
+	sm, err := db.EncryptFirst(MimaWithHistory{Mima: m})
 	if err != nil {
 		return err
 	}
@@ -151,9 +156,9 @@ func (db *DB) EncryptFirst(mwh MimaWithHistory) (SealedMima, error) {
 	return mwhToSM(mwh, db.userKey)
 }
 
-// Encrypt returns mwhToSM(mwh, db.key)
-func (db *DB) Encrypt(mwh MimaWithHistory) (SealedMima, error) {
-	return mwhToSM(mwh, db.key)
+// mwhToSM uses db.key to encrypts a Mima.
+func (db *DB) Encrypt(m Mima) (SealedMima, error) {
+	return mwhToSM(MimaWithHistory{Mima: m}, db.key)
 }
 
 // mwhToSM encrypts a MimaWithHistory to a SealedMima.
@@ -227,15 +232,20 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 	return nil
 }
 
-func (db *DB) InsertMima(mima Mima) (err error) {
-	tx := db.mustBegin()
-	defer tx.Rollback()
+func (db *DB) InsertMima(m Mima) (err error) {
+	return insertMima(db.TempDB, m)
+}
 
-	if mima.ID, err = getNextID(tx, mima_id_key); err != nil {
+func (db *DB) SealedInsert(m *Mima) (err error) {
+	if m.ID, err = getNextID(db.DB, mima_id_key); err != nil {
 		return
 	}
-	if err = insertMima(tx, mima); err != nil {
+	sm, err := db.Encrypt(*m)
+	if err != nil {
+		return err
+	}
+	if err = insertSealed(db.DB, sm); err != nil {
 		return
 	}
-	return tx.Commit()
+	return insertMima(db.TempDB, *m)
 }

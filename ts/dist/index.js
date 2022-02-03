@@ -21,9 +21,7 @@ function checkSignIn() {
         if (!yes) {
             GotoSignIn.elem().show();
         }
-    }),
-        undefined,
-        () => {
-            Loading.hide();
-        };
+    }, undefined, () => {
+        Loading.hide();
+    });
 }

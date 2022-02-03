@@ -1,6 +1,10 @@
 package model
 
-import "ahui2016.github.com/mima/util"
+import (
+	"strings"
+
+	"ahui2016.github.com/mima/util"
+)
 
 type Settings struct {
 	AppAddr string
@@ -28,12 +32,31 @@ type Mima struct {
 	MTime    int64 // 修改日期
 }
 
-func NewMima(id, title, label string) *Mima {
-	return &Mima{
-		ID:    id,
-		Title: title,
-		Label: label,
-		CTime: util.TimeNow(),
+// func NewMima(id, title, label string) *Mima {
+// 	return &Mima{
+// 		ID:    id,
+// 		Title: title,
+// 		Label: label,
+// 		CTime: util.TimeNow(),
+// 	}
+// }
+
+type EditForm struct {
+	Title    string `form:"title" binding:"required"`
+	Label    string `form:"label"`
+	Username string `form:"username"`
+	Password string `form:"password"`
+	Notes    string `form:"notes"`
+}
+
+func NewFrom(form EditForm) Mima {
+	return Mima{
+		Title:    strings.TrimSpace(form.Title),
+		Label:    strings.TrimSpace(form.Label),
+		Username: strings.TrimSpace(form.Username),
+		Password: form.Password,
+		Notes:    strings.TrimSpace(form.Notes),
+		CTime:    util.TimeNow(),
 	}
 }
 

@@ -64,10 +64,10 @@ func main() {
 		auth.POST("/change-pwd", changePwdHandler)
 	}
 
-	// api := r.Group("/api", Sleep(), CheckSignIn())
-	// {
-	// 	api.GET("/is-db-empty", isDatabaseEmpty)
-	// }
+	api := r.Group("/api", Sleep(), CheckSignIn())
+	{
+		api.POST("/add", addHandler)
+	}
 
 	if err := r.Run(*addr); err != nil {
 		log.Fatal(err)

@@ -28,14 +28,17 @@ function init() {
 }
 
 function checkSignIn() {
-  util.ajax({ method: "GET", url: "/auth/is-signed-in", alerts: Alerts }, (resp) => {
-    const yes = resp as boolean;
-    if (!yes) {
-      GotoSignIn.elem().show();
-    }
-  }),
+  util.ajax(
+    { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
+    (resp) => {
+      const yes = resp as boolean;
+      if (!yes) {
+        GotoSignIn.elem().show();
+      }
+    },
     undefined,
     () => {
       Loading.hide();
-    };
+    }
+  );
 }
