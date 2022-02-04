@@ -14,6 +14,7 @@ const UsernameInput = util.create_input();
 const PasswordInput = util.create_input();
 const NotesInput = util.create_textarea();
 const SubmitBtn = cc("button", { text: "Submit" });
+const FormAlerts = util.CreateAlerts();
 
 const Form = cc("form", {
   children: [
@@ -31,7 +32,7 @@ const Form = cc("form", {
       event.preventDefault();
       const title = util.val(TitleInput, "trim");
       if (!title) {
-        Alerts.insert("danger", "Title(标题)必填");
+        FormAlerts.insert("danger", "Title(标题)必填");
         util.focus(TitleInput);
         return;
       }
@@ -46,7 +47,7 @@ const Form = cc("form", {
         {
           method: "POST",
           url: "/api/add",
-          alerts: Alerts,
+          alerts: FormAlerts,
           buttonID: SubmitBtn.id,
           body: body,
         },
@@ -60,7 +61,7 @@ const Form = cc("form", {
   ],
 });
 
-$("#root").append(titleArea, m(Form));
+$("#root").append(titleArea, m(Alerts), m(Form));
 
 init();
 

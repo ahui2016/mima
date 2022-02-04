@@ -2,15 +2,39 @@
 import { mjElement, mjComponent, m, cc, span, appendToList } from "./mj.js";
 import * as util from "./util.js";
 
+var searchMode: "LabelOnly" | "LabelAndTitle" = "LabelOnly";
+
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
 
-const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
+const titleArea = m("div")
+  .addClass("text-center")
+  .append(m("h1").text("Search mima"));
 
 const GotoSignIn = cc("div", {
   children: [
     m("p").addClass("alert-danger").text("请先登入。"),
     m("div").append("前往登入页面 ➡ ", util.LinkElem("/public/sign-in.html")),
+  ],
+});
+
+const SearchModeName = cc("span");
+const SearchInput = cc("input");
+const SearchBtn = cc("button", { text: "search" });
+
+const SearchForm = cc("form", {
+  children: [
+    m("div").append(
+      span("mode: "),
+      m(SearchModeName).text(searchMode),
+      util.LinkElem("#", { text: "(toggle)" }).addClass('ml-1').on("click", (event) => {
+        event.preventDefault();
+        searchMode = searchMode == "LabelOnly" ? "LabelAndTitle" : "LabelOnly";
+        SearchModeName.elem().text(searchMode);
+      })
+    ),
+    m(SearchInput),
+    m(SearchBtn),
   ],
 });
 
@@ -20,15 +44,14 @@ $("#root").append(
   titleArea,
   m(Loading),
   m(Alerts),
+  m(SearchForm),
   m(GotoSignIn).hide(),
   m(MimaList).addClass("mt-3")
 );
 
 init();
 
-function init() {
-  getAll();
-}
+function init() {}
 
 function getAll() {
   util.ajax(
