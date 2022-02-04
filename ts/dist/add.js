@@ -18,6 +18,7 @@ const Form = cc("form", {
         util.create_item(UsernameInput, "Username", ""),
         util.create_item(PasswordInput, "Password", ""),
         util.create_item(NotesInput, "Notes", ""),
+        m(Alerts),
         m(SubmitBtn).on("click", (event) => {
             event.preventDefault();
             const title = util.val(TitleInput, "trim");
@@ -47,7 +48,7 @@ const Form = cc("form", {
         }),
     ],
 });
-$("#root").append(titleArea, m(Form), m(Alerts));
+$("#root").append(titleArea, m(Form));
 init();
 function init() {
     util.focus(TitleInput);

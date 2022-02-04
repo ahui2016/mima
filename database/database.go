@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"ahui2016.github.com/mima/model"
 	"ahui2016.github.com/mima/stmt"
@@ -83,6 +82,38 @@ func (db *DB) Open(dbPath string) (err error) {
 	return util.WrapErrors(e1, e2, e3)
 }
 
+func (db *DB) CountAllMima() (int64, error) {
+	return getInt1(db.TempDB, stmt.CountAllMima)
+}
+
+func (db *DB) RefillTempDB() error {
+	n, err := db.CountAllMima()
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		// 避免重复填充
+		return nil
+	}
+	all, err := db.GetAllSealed()
+	if err != nil {
+		return err
+	}
+	tx := db.mustBegin()
+	defer tx.Rollback()
+
+	for _, sm := range all {
+		mwh, err := db.decrypt(sm)
+		if err != nil {
+			return err
+		}
+		if err = insertMWH(tx, mwh); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 // 解密整个数据库，生成临时数据库。
 // func (db *DB) Init(password string) error {}
 
@@ -134,8 +165,6 @@ func (db *DB) IsDefaultPwd() (bool, error) {
 func (db *DB) CheckPassword(pwd string) (bool, error) {
 	if db.userKey != blankKey {
 		key := sha256.Sum256([]byte(pwd))
-		log.Print(db.userKey)
-		log.Print(key)
 		return db.userKey == key, nil
 	}
 	row := db.DB.QueryRow(stmt.GetSealedByID, theVeryFirstID)
@@ -232,10 +261,6 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 	return nil
 }
 
-func (db *DB) InsertMima(m Mima) (err error) {
-	return insertMima(db.TempDB, m)
-}
-
 func (db *DB) SealedInsert(m *Mima) (err error) {
 	if m.ID, err = getNextID(db.DB, mima_id_key); err != nil {
 		return
@@ -247,7 +272,7 @@ func (db *DB) SealedInsert(m *Mima) (err error) {
 	if err = insertSealed(db.DB, sm); err != nil {
 		return
 	}
-	return insertMima(db.TempDB, *m)
+	return insertMima(db.TempDB, MimaWithHistory{Mima: *m})
 }
 
 func (db *DB) GetMWH(id string) (_ MimaWithHistory, err error) {
@@ -257,4 +282,21 @@ func (db *DB) GetMWH(id string) (_ MimaWithHistory, err error) {
 		return
 	}
 	return decrypt(sm.Secret, db.key)
+}
+
+func (db *DB) GetAllSealed() ([]SealedMima, error) {
+	rows, err := db.DB.Query(stmt.GetAllSealed, theVeryFirstID)
+	if err != nil {
+		return nil, err
+	}
+	return scanAllSealed(rows)
+}
+
+// GetAllSimple gets all items without password, notes, history.
+func (db *DB) GetAllSimple() ([]Mima, error) {
+	rows, err := db.TempDB.Query(stmt.GetAllSimple)
+	if err != nil {
+		return nil, err
+	}
+	return scanAllSimple(rows)
 }

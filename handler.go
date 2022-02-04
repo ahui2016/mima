@@ -97,6 +97,12 @@ func signInHandler(c *gin.Context) {
 		return
 	}
 
+	// 如果前面的 checkPasswordAndIP 验证了密码正确，则数据库的密钥会被正确设置，
+	// 因此在这里可以解密数据库，并填充解密后的临时数据库。
+	if Err(c, db.RefillTempDB()) {
+		return
+	}
+
 	options := newNormalOptions()
 	session := sessions.Default(c)
 	if Err(c, sessionSet(session, true, options)) {
@@ -168,4 +174,12 @@ func getMimaHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(OK, mwh)
+}
+
+func getAllSimple(c *gin.Context) {
+	all, err := db.GetAllSimple()
+	if Err(c, err) {
+		return
+	}
+	c.JSON(OK, all)
 }

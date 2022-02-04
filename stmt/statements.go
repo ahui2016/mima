@@ -23,6 +23,7 @@ const InsertTextValue = `INSERT INTO metadata (name, text_value) VALUES (?, ?);`
 const GetTextValue = `SELECT text_value FROM metadata WHERE name=?;`
 const UpdateTextValue = `UPDATE metadata SET text_value=? WHERE name=?;`
 
+const GetAllSealed = `SELECT * FROM sealed_mima WHERE id<>?;`
 const InsertSealed = `INSERT INTO sealed_mima (id, secret) VALUES (?, ?);`
 const GetSealedByID = `SELECT * FROM sealed_mima WHERE id=?;`
 const UpdateSealed = `UPDATE sealed_mima SET secret=? WHERE id=?;`
@@ -52,7 +53,6 @@ CREATE TABLE IF NOT EXISTS history
   id          text   PRIMARY KEY COLLATE NOCASE,
   mima_id     text   REFERENCES mima(id) ON DELETE CASCADE,
   title       text   NOT NULL,
-  label       text   NOT NULL,
   username    text   NOT NULL,
   password    text   NOT NULL,
   notes       text   NOT NULL,
@@ -66,4 +66,13 @@ const InsertMima = `INSERT INTO mima (
   id, title, label, username, password, notes, ctime, mtime
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
 
+const InsertHistory = `INSERT INTO history (
+  id, mima_id, title, username, password, notes, ctime
+) VALUES (?, ?, ?, ?, ?, ?, ?);`
+
 const GetMimaByID = `SELECT * FROM mima WHERE id=?;`
+
+const GetAllSimple = `SELECT id, title, label, username, ctime, mtime
+  FROM mima ORDER BY ctime DESC;`
+
+const CountAllMima = `SELECT count(*) FROM mima;`

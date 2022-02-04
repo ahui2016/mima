@@ -76,6 +76,7 @@
   .alert-info {
     color: blue;
   }
+  .text-grey,
   .form-text {
     color: var(--grey);
   }
