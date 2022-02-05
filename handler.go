@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"time"
@@ -178,6 +179,32 @@ func getMimaHandler(c *gin.Context) {
 
 func getAllSimple(c *gin.Context) {
 	all, err := db.GetAllSimple()
+	if Err(c, err) {
+		return
+	}
+	c.JSON(OK, all)
+}
+
+func searchHandler(c *gin.Context) {
+	type searchForm struct {
+		Mode    string `form:"mode" binding:"required"`
+		Pattern string `form:"pattern" binding:"required"`
+	}
+	var (
+		form searchForm
+		all  []model.Mima
+		err  error
+	)
+	if BindCheck(c, &form) {
+		return
+	}
+	if form.Mode == "LabelOnly" {
+		all, err = db.GetByLabel(form.Pattern)
+	} else if form.Mode == "LabelAndTitle" {
+		all, err = db.GetByLabelAndTitle(form.Pattern)
+	} else {
+		err = fmt.Errorf("unknown mode: %s", form.Mode)
+	}
 	if Err(c, err) {
 		return
 	}

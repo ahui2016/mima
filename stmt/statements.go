@@ -76,3 +76,9 @@ const GetAllSimple = `SELECT id, title, label, username, ctime, mtime
   FROM mima ORDER BY ctime DESC;`
 
 const CountAllMima = `SELECT count(*) FROM mima;`
+
+const GetByLabel = `SELECT id, title, label, username, ctime, mtime
+  FROM mima WHERE label=? ORDER BY mtime DESC;`
+
+const GetByLabelAndTitle = `SELECT id, title, label, username, ctime, mtime
+  FROM mima WHERE label=? OR title LIKE ? ORDER BY mtime DESC;`

@@ -50,7 +50,7 @@ func main() {
 	})
 
 	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusFound, "/public/index.html")
+		c.Redirect(http.StatusFound, "/public/search.html")
 	})
 
 	auth := r.Group("/auth", Sleep())
@@ -69,6 +69,7 @@ func main() {
 		api.GET("/all", getAllSimple)
 		api.POST("/add", addHandler)
 		api.POST("/get-mima", getMimaHandler)
+		api.POST("/search", searchHandler)
 	}
 
 	if err := r.Run(*addr); err != nil {

@@ -4,7 +4,7 @@ import * as util from "./util.js";
 
 var searchMode: "LabelOnly" | "LabelAndTitle" = "LabelOnly";
 
-const Alerts = util.CreateAlerts();
+const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
 
 const titleArea = m("div")
@@ -27,14 +27,47 @@ const SearchForm = cc("form", {
     m("div").append(
       span("mode: "),
       m(SearchModeName).text(searchMode),
-      util.LinkElem("#", { text: "(toggle)" }).addClass('ml-1').on("click", (event) => {
-        event.preventDefault();
-        searchMode = searchMode == "LabelOnly" ? "LabelAndTitle" : "LabelOnly";
-        SearchModeName.elem().text(searchMode);
-      })
+      util
+        .LinkElem("#", { text: "(toggle)" })
+        .addClass("ml-1")
+        .on("click", (event) => {
+          event.preventDefault();
+          searchMode =
+            searchMode == "LabelOnly" ? "LabelAndTitle" : "LabelOnly";
+          SearchModeName.elem().text(searchMode);
+        })
     ),
     m(SearchInput),
-    m(SearchBtn),
+    m(SearchBtn).on("click", (event) => {
+      event.preventDefault();
+      const body = { mode: searchMode, pattern: util.val(SearchInput, "trim") };
+      Alerts.insert("primary", "正在检索: " + body.pattern);
+      util.ajax(
+        {
+          method: "POST",
+          url: "/api/search",
+          alerts: Alerts,
+          buttonID: SearchBtn.id,
+          body: body,
+        },
+        (resp) => {
+          const items = resp as util.Mima[];
+          if (items && items.length > 0) {
+            Alerts.insert("success", `找到 ${items.length} 条结果`);
+            clear_list(MimaList);
+            appendToList(MimaList, items.map(MimaItem));
+          } else {
+            Alerts.insert('info', '找不到。');
+          }
+        },
+        (that, errMsg) => {
+          if (that.status == 401) {
+            GotoSignIn.elem().show();
+          }
+          Alerts.insert("danger", errMsg);
+        }
+      );
+    }),
   ],
 });
 
@@ -43,37 +76,16 @@ const MimaList = cc("div");
 $("#root").append(
   titleArea,
   m(Loading),
+  m(SearchForm).hide(),
   m(Alerts),
-  m(SearchForm),
   m(GotoSignIn).hide(),
   m(MimaList).addClass("mt-3")
 );
 
 init();
 
-function init() {}
-
-function getAll() {
-  util.ajax(
-    { method: "GET", url: "/api/all", alerts: Alerts },
-    (resp) => {
-      const all = resp as util.Mima[];
-      if (all && all.length > 0) {
-        appendToList(MimaList, all.map(MimaItem));
-      } else {
-        Alerts.insert("info", "空空如也");
-      }
-    },
-    (that, errMsg) => {
-      if (that.status == 401) {
-        GotoSignIn.elem().show();
-      }
-      Alerts.insert("danger", errMsg);
-    },
-    () => {
-      Loading.hide();
-    }
-  );
+function init() {
+  checkSignIn();
 }
 
 function MimaItem(mima: util.Mima): mjComponent {
@@ -115,7 +127,9 @@ function checkSignIn() {
     { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
     (resp) => {
       const yes = resp as boolean;
-      if (!yes) {
+      if (yes) {
+        SearchForm.elem().show();
+      } else {
         GotoSignIn.elem().show();
       }
     },
@@ -124,4 +138,8 @@ function checkSignIn() {
       Loading.hide();
     }
   );
+}
+
+function clear_list(list: mjComponent): void {
+  list.elem().html('');
 }

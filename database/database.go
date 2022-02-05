@@ -300,3 +300,19 @@ func (db *DB) GetAllSimple() ([]Mima, error) {
 	}
 	return scanAllSimple(rows)
 }
+
+func (db *DB) GetByLabel(pattern string) ([]Mima, error) {
+	rows, err := db.TempDB.Query(stmt.GetByLabel, pattern)
+	if err != nil {
+		return nil, err
+	}
+	return scanAllSimple(rows)
+}
+
+func (db *DB) GetByLabelAndTitle(pattern string) ([]Mima, error) {
+	rows, err := db.TempDB.Query(stmt.GetByLabelAndTitle, pattern, "%"+pattern+"%")
+	if err != nil {
+		return nil, err
+	}
+	return scanAllSimple(rows)
+}
