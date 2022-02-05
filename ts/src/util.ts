@@ -370,3 +370,12 @@ export function create_box(
 export function noCaseIndexOf(arr: string[], s: string): number {
   return arr.findIndex((x) => x.toLowerCase() === s.toLowerCase());
 }
+
+export function CreateGotoSignIn() {
+  return cc("div", {
+    children: [
+      m("p").addClass("alert-danger").text("请先登入。"),
+      m("div").append("前往登入页面 ➡ ", LinkElem("/public/sign-in.html")),
+    ],
+  });
+}

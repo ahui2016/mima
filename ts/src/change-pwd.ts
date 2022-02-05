@@ -3,11 +3,15 @@ import { mjElement, mjComponent, m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 
 const Alerts = util.CreateAlerts();
-const Loading = util.CreateLoading("center");
+const Loading = util.CreateLoading();
 
-const titleArea = m("div")
-  .addClass("text-center")
-  .append(m("h2").text("Change Master Password .. mima"));
+const NaviBar = cc("div", {
+  classes: "my-5",
+  children: [
+    util.LinkElem("/", { text: "mima" }),
+    span(" .. Change Master Password"),
+  ],
+});
 
 const DefaultPwdNotes = cc("p", {
   text: "当前密码是 abc, 已自动填写当前密码，请输入新密码。",
@@ -65,8 +69,8 @@ const Form = cc("form", {
 });
 
 $("#root").append(
-  titleArea,
-  m(Loading),
+  m(NaviBar),
+  m(Loading).addClass('my-3'),
   m(DefaultPwdNotes).hide(),
   m(Form),
   m(Alerts)

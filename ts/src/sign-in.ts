@@ -5,9 +5,14 @@ import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
 
-const titleArea = m("div")
-  .addClass("text-center")
-  .append(m("h1").text("Sign in .. mima"));
+const NaviBar = cc("div", {
+  classes: "my-5",
+  children: [
+    util.LinkElem("/", { text: "mima" }),
+    span(" .. Sign-in .. "),
+    util.LinkElem("/public/change-pwd.html", { text: "change password" }),
+  ],
+});
 
 const GotoChangePwd = cc("div", {
   children: [
@@ -50,7 +55,7 @@ const SignOutArea = cc("div", {
 // https://www.chromium.org/developers/design-documents/form-styles-that-chromium-understands/
 const UsernameInput = cc("input", { attr: { autocomplete: "username" } });
 const PwdInput = cc("input", { attr: { autocomplete: "current-password" } });
-const SubmitBtn = cc("button", {text:"Sign in"});
+const SubmitBtn = cc("button", { text: "Sign in" });
 
 const SignInForm = cc("form", {
   children: [
@@ -96,8 +101,8 @@ const SignInForm = cc("form", {
 });
 
 $("#root").append(
-  titleArea,
-  m(Loading),
+  m(NaviBar),
+  m(Loading).addClass("my-3"),
   m(SignInForm).hide(),
   m(Alerts),
   m(SignOutArea).hide(),

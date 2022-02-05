@@ -4,15 +4,20 @@ import * as util from "./util.js";
 var searchMode = "LabelOnly";
 const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
-const titleArea = m("div")
-    .addClass("text-center")
-    .append(m("h1").text("Search mima"));
-const GotoSignIn = cc("div", {
+const titleArea = m("div").append(m("h1").text("mima"));
+const GotoSignOut = cc("a", {
+    text: "Sign-out",
+    attr: { href: "/public/sign-in.html" },
+});
+const NaviBar = cc("div", {
+    classes: "text-right mb-5",
     children: [
-        m("p").addClass("alert-danger").text("请先登入。"),
-        m("div").append("前往登入页面 ➡ ", util.LinkElem("/public/sign-in.html")),
+        util.LinkElem("/public/index.html", { text: "Index" }),
+        util.LinkElem("/public/add.html", { text: "Add" }).addClass("ml-2"),
+        m(GotoSignOut).addClass("ml-2").hide(),
     ],
 });
+const GotoSignIn = util.CreateGotoSignIn();
 const SearchModeName = cc("span");
 const SearchInput = cc("input");
 const SearchBtn = cc("button", { text: "search" });
@@ -46,7 +51,7 @@ const SearchForm = cc("form", {
                     appendToList(MimaList, items.map(MimaItem));
                 }
                 else {
-                    Alerts.insert('info', '找不到。');
+                    Alerts.insert("info", "找不到。");
                 }
             }, (that, errMsg) => {
                 if (that.status == 401) {
@@ -58,7 +63,7 @@ const SearchForm = cc("form", {
     ],
 });
 const MimaList = cc("div");
-$("#root").append(titleArea, m(Loading), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"));
+$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"));
 init();
 function init() {
     checkSignIn();
@@ -90,7 +95,9 @@ function checkSignIn() {
     util.ajax({ method: "GET", url: "/auth/is-signed-in", alerts: Alerts }, (resp) => {
         const yes = resp;
         if (yes) {
+            GotoSignOut.elem().show();
             SearchForm.elem().show();
+            util.focus(SearchInput);
         }
         else {
             GotoSignIn.elem().show();
@@ -100,5 +107,5 @@ function checkSignIn() {
     });
 }
 function clear_list(list) {
-    list.elem().html('');
+    list.elem().html("");
 }

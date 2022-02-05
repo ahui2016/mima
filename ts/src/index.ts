@@ -7,18 +7,22 @@ const Loading = util.CreateLoading("center");
 
 const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
 
-const GotoSignIn = cc("div", {
+const NaviBar = cc("div", {
+  classes: "text-right mb-3",
   children: [
-    m("p").addClass("alert-danger").text("请先登入。"),
-    m("div").append("前往登入页面 ➡ ", util.LinkElem("/public/sign-in.html")),
+    util.LinkElem("/public/search.html", { text: "Search" }),
+    util.LinkElem("/public/add.html", { text: "Add" }).addClass("ml-2"),
   ],
 });
+
+const GotoSignIn = util.CreateGotoSignIn();
 
 const MimaList = cc("div");
 
 $("#root").append(
   titleArea,
-  m(Loading),
+  m(NaviBar),
+  m(Loading).addClass("my-3"),
   m(Alerts),
   m(GotoSignIn).hide(),
   m(MimaList).addClass("mt-3")
@@ -85,20 +89,4 @@ function MimaItem(mima: util.Mima): mjComponent {
     }
   };
   return self;
-}
-
-function checkSignIn() {
-  util.ajax(
-    { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
-    (resp) => {
-      const yes = resp as boolean;
-      if (!yes) {
-        GotoSignIn.elem().show();
-      }
-    },
-    undefined,
-    () => {
-      Loading.hide();
-    }
-  );
 }

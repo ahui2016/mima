@@ -1,10 +1,12 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import { m, cc } from "./mj.js";
+import { m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
-const titleArea = m("div")
-    .addClass("text-center")
-    .append(m("h1").text("Add a mima"));
+const Loading = util.CreateLoading();
+const NaviBar = cc("div", {
+    classes: "my-5",
+    children: [util.LinkElem("/", { text: "mima" }), span(" .. Add an item")],
+});
 const TitleInput = util.create_input();
 const LabelInput = util.create_input();
 const UsernameInput = util.create_input();
@@ -19,7 +21,7 @@ const Form = cc("form", {
         util.create_item(UsernameInput, "Username", ""),
         util.create_item(PasswordInput, "Password", ""),
         util.create_item(NotesInput, "Notes", ""),
-        m(Alerts),
+        m(FormAlerts),
         m(SubmitBtn).on("click", (event) => {
             event.preventDefault();
             const title = util.val(TitleInput, "trim");
@@ -49,8 +51,23 @@ const Form = cc("form", {
         }),
     ],
 });
-$("#root").append(titleArea, m(Alerts), m(Form));
+const GotoSignIn = util.CreateGotoSignIn();
+$("#root").append(m(NaviBar), m(Loading).addClass('my-3'), m(Alerts), m(GotoSignIn).hide(), m(Form).hide());
 init();
 function init() {
-    util.focus(TitleInput);
+    checkSignIn();
+}
+function checkSignIn() {
+    util.ajax({ method: "GET", url: "/auth/is-signed-in", alerts: Alerts }, (resp) => {
+        const yes = resp;
+        if (yes) {
+            Form.elem().show();
+            util.focus(TitleInput);
+        }
+        else {
+            GotoSignIn.elem().show();
+        }
+    }, undefined, () => {
+        Loading.hide();
+    });
 }

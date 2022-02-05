@@ -1,11 +1,16 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import { m, cc } from "./mj.js";
+import { m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
-const titleArea = m("div")
-    .addClass("text-center")
-    .append(m("h1").text("Sign in .. mima"));
+const NaviBar = cc("div", {
+    classes: "my-5",
+    children: [
+        util.LinkElem("/", { text: "mima" }),
+        span(" .. Sign-in .. "),
+        util.LinkElem("/public/change-pwd.html", { text: "change password" }),
+    ],
+});
 const GotoChangePwd = cc("div", {
     children: [
         m("p")
@@ -73,7 +78,7 @@ const SignInForm = cc("form", {
         })),
     ],
 });
-$("#root").append(titleArea, m(Loading), m(SignInForm).hide(), m(Alerts), m(SignOutArea).hide(), m(GotoChangePwd).hide());
+$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(SignInForm).hide(), m(Alerts), m(SignOutArea).hide(), m(GotoChangePwd).hide());
 init();
 function init() {
     checkSignIn();

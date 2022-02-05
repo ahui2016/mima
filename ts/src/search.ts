@@ -7,16 +7,23 @@ var searchMode: "LabelOnly" | "LabelAndTitle" = "LabelOnly";
 const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
 
-const titleArea = m("div")
-  .addClass("text-center")
-  .append(m("h1").text("Search mima"));
+const titleArea = m("div").append(m("h1").text("mima"));
 
-const GotoSignIn = cc("div", {
+const GotoSignOut = cc("a", {
+  text: "Sign-out",
+  attr: { href: "/public/sign-in.html"},
+});
+
+const NaviBar = cc("div", {
+  classes: "text-right mb-5",
   children: [
-    m("p").addClass("alert-danger").text("请先登入。"),
-    m("div").append("前往登入页面 ➡ ", util.LinkElem("/public/sign-in.html")),
+    util.LinkElem("/public/index.html", { text: "Index" }),
+    util.LinkElem("/public/add.html", { text: "Add" }).addClass("ml-2"),
+    m(GotoSignOut).addClass("ml-2").hide(),
   ],
 });
+
+const GotoSignIn = util.CreateGotoSignIn();
 
 const SearchModeName = cc("span");
 const SearchInput = cc("input");
@@ -57,7 +64,7 @@ const SearchForm = cc("form", {
             clear_list(MimaList);
             appendToList(MimaList, items.map(MimaItem));
           } else {
-            Alerts.insert('info', '找不到。');
+            Alerts.insert("info", "找不到。");
           }
         },
         (that, errMsg) => {
@@ -75,7 +82,8 @@ const MimaList = cc("div");
 
 $("#root").append(
   titleArea,
-  m(Loading),
+  m(NaviBar),
+  m(Loading).addClass("my-3"),
   m(SearchForm).hide(),
   m(Alerts),
   m(GotoSignIn).hide(),
@@ -128,7 +136,9 @@ function checkSignIn() {
     (resp) => {
       const yes = resp as boolean;
       if (yes) {
+        GotoSignOut.elem().show();
         SearchForm.elem().show();
+        util.focus(SearchInput);
       } else {
         GotoSignIn.elem().show();
       }
@@ -141,5 +151,5 @@ function checkSignIn() {
 }
 
 function clear_list(list: mjComponent): void {
-  list.elem().html('');
+  list.elem().html("");
 }

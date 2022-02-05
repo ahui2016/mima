@@ -256,3 +256,11 @@ export function create_box(type, name, checked = "") {
 export function noCaseIndexOf(arr, s) {
     return arr.findIndex((x) => x.toLowerCase() === s.toLowerCase());
 }
+export function CreateGotoSignIn() {
+    return cc("div", {
+        children: [
+            m("p").addClass("alert-danger").text("请先登入。"),
+            m("div").append("前往登入页面 ➡ ", LinkElem("/public/sign-in.html")),
+        ],
+    });
+}

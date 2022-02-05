@@ -3,10 +3,12 @@ import { mjElement, mjComponent, m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 
 const Alerts = util.CreateAlerts();
+const Loading = util.CreateLoading();
 
-const titleArea = m("div")
-  .addClass("text-center")
-  .append(m("h1").text("Add a mima"));
+const NaviBar = cc("div", {
+  classes: "my-5",
+  children: [util.LinkElem("/", { text: "mima" }), span(" .. Add an item")],
+});
 
 const TitleInput = util.create_input();
 const LabelInput = util.create_input();
@@ -27,7 +29,7 @@ const Form = cc("form", {
     util.create_item(UsernameInput, "Username", ""),
     util.create_item(PasswordInput, "Password", ""),
     util.create_item(NotesInput, "Notes", ""),
-    m(Alerts),
+    m(FormAlerts),
     m(SubmitBtn).on("click", (event) => {
       event.preventDefault();
       const title = util.val(TitleInput, "trim");
@@ -61,10 +63,37 @@ const Form = cc("form", {
   ],
 });
 
-$("#root").append(titleArea, m(Alerts), m(Form));
+const GotoSignIn = util.CreateGotoSignIn();
+
+$("#root").append(
+  m(NaviBar),
+  m(Loading).addClass('my-3'),
+  m(Alerts),
+  m(GotoSignIn).hide(),
+  m(Form).hide()
+);
 
 init();
 
 function init() {
-  util.focus(TitleInput);
+  checkSignIn();
+}
+
+function checkSignIn() {
+  util.ajax(
+    { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
+    (resp) => {
+      const yes = resp as boolean;
+      if (yes) {
+        Form.elem().show();
+        util.focus(TitleInput);
+      } else {
+        GotoSignIn.elem().show();
+      }
+    },
+    undefined,
+    () => {
+      Loading.hide();
+    }
+  );
 }
