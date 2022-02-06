@@ -1,11 +1,15 @@
-import { m, cc } from "./mj.js";
+import { m, cc, span, prependToList } from "./mj.js";
 import * as util from "./util.js";
 const id = util.getUrlParam("id");
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
-const titleArea = m("div")
-    .addClass("text-center")
-    .append(m("h1").text("Edit a mima"));
+const NaviBar = cc("div", {
+    children: [util.LinkElem("/", { text: "mima" }), span(" .. Edit an item")],
+});
+const HistoryList = cc("div");
+const HistoryArea = cc("div", {
+    children: [m("h3").text("History").addClass('mb-0'), m("hr"), m(HistoryList)],
+});
 const ID_Input = util.create_input();
 const TitleInput = util.create_input();
 const LabelInput = util.create_input();
@@ -47,12 +51,13 @@ const Form = cc("form", {
                 body: body,
             }, () => {
                 Form.elem().hide();
+                HistoryArea.elem().hide();
                 Alerts.clear().insert("success", `修改成功，可刷新页面查看结果。`);
             });
         }),
     ],
 });
-$("#root").append(titleArea, m(Loading), m(Alerts), m(Form).hide());
+$("#root").append(m(NaviBar).addClass('my-3'), m(Loading).addClass('my-3'), m(Alerts).addClass('my-3'), m(Form).hide(), m(HistoryArea).addClass("my-5").hide());
 init();
 function init() {
     if (!id) {
@@ -73,7 +78,38 @@ function loadData() {
         UsernameInput.elem().val(mwh.Username);
         PasswordInput.elem().val(mwh.Password);
         NotesInput.elem().val(mwh.Notes);
+        if (mwh.History) {
+            HistoryArea.elem().show();
+            prependToList(HistoryList, mwh.History.map(HistoryItem));
+        }
     }, undefined, () => {
         Loading.hide();
     });
+}
+function HistoryItem(h) {
+    const self = cc("div", {
+        id: h.ID,
+        classes: "HistoryItem",
+        children: [
+            m("div")
+                .addClass("HistoryTitleArea")
+                .append(span(`(${dayjs.unix(h.CTime).format("YYYY-MM-DD")})`).addClass("text-grey"), span(h.Title).addClass("ml-2")),
+            m("div").addClass("UsernamePassword"),
+        ],
+    });
+    self.init = () => {
+        const details = self.elem().find(".UsernamePassword");
+        if (h.Username) {
+            details.append(span("username: ").addClass("text-grey"), h.Username);
+        }
+        if (h.Password) {
+            details.append(span("password: ").addClass("text-grey ml-2"), h.Password);
+        }
+        if (h.Notes) {
+            self
+                .elem()
+                .append(m("div").append(span("Notes: ").addClass("text-grey"), h.Notes));
+        }
+    };
+    return self;
 }

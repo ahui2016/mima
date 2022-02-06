@@ -4,7 +4,6 @@ import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
 const NaviBar = cc("div", {
-    classes: "my-5",
     children: [util.LinkElem("/", { text: "mima" }), span(" .. Add an item")],
 });
 const TitleInput = util.create_input();
@@ -52,7 +51,7 @@ const Form = cc("form", {
     ],
 });
 const GotoSignIn = util.CreateGotoSignIn();
-$("#root").append(m(NaviBar), m(Loading).addClass('my-3'), m(Alerts), m(GotoSignIn).hide(), m(Form).hide());
+$("#root").append(m(NaviBar).addClass('my-3'), m(Loading).addClass('my-3'), m(Alerts).addClass('my-3'), m(GotoSignIn).hide(), m(Form).hide());
 init();
 function init() {
     checkSignIn();

@@ -30,6 +30,7 @@
   text-align: right;
 }
 
+.HistoryItem,
 .MimaItem {
   margin-bottom: 1.5rem;
 }

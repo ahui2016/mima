@@ -48,6 +48,13 @@ export function cc(name, options) {
 export function span(text) {
     return m('span').text(text);
 }
+export function prependToList(list, items) {
+    items.forEach(item => {
+        var _a;
+        list.elem().prepend(m(item));
+        (_a = item.init) === null || _a === void 0 ? void 0 : _a.call(item);
+    });
+}
 export function appendToList(list, items) {
     items.forEach(item => {
         var _a;

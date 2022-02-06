@@ -287,7 +287,7 @@ func (db *DB) sealedUpdate(mwh MimaWithHistory) (err error) {
 	tx := db.mustBegin()
 	defer tx.Rollback()
 
-	// mwh.History 的最后一个是新增的记录, 详见 db.UpdateMima
+	// mwh.History 的最后一个是新增的历史记录, 详见 db.UpdateMima
 	h := mwh.History[len(mwh.History)-1]
 	if err := updateMima(tx, mwh.Mima, h); err != nil {
 		return err
@@ -345,9 +345,10 @@ func (db *DB) UpdateMima(m Mima) error {
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("not found (id: %s)", m.ID)
 	}
+	// mwh.History 的最后一个是新增的历史记录
+	mwh.History = append(mwh.History, model.HistoryFrom(mwh.Mima))
 	m.CTime = mwh.CTime      // CTime 以数据库中的数据为准（即保持原值）
 	m.MTime = util.TimeNow() // MTime 就是现在
-	mwh.Mima = m
-	mwh.History = append(mwh.History, model.HistoryFrom(m))
-	return db.sealedUpdate(mwh) // mwh.History 的最后一个是新增的记录
+	mwh.Mima = m             // 其他项的值来自 m
+	return db.sealedUpdate(mwh)
 }

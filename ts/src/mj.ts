@@ -73,6 +73,13 @@ export function span(text: string): mjElement {
   return m('span').text(text);
 }
 
+export function prependToList(list: mjComponent, items: mjComponent[]): void {
+  items.forEach(item => {
+    list.elem().prepend(m(item));
+    item.init?.();
+  });
+}
+
 export function appendToList(list: mjComponent, items: mjComponent[]): void {
   items.forEach(item => {
     list.elem().append(m(item));
