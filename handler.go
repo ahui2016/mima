@@ -163,10 +163,11 @@ func addHandler(c *gin.Context) {
 	var form model.AddMimaForm
 	c.Bind(&form)
 	m := model.NewFromAdd(form)
-	if Err(c, db.SealedInsert(m)) {
+	id, err := db.SealedInsert(m)
+	if Err(c, err) {
 		return
 	}
-	c.JSON(OK, Text{m.ID})
+	c.JSON(OK, Text{id})
 }
 
 func editHandler(c *gin.Context) {

@@ -50,13 +50,15 @@ type AddMimaForm struct {
 }
 
 func NewFromAdd(form AddMimaForm) Mima {
+	now := util.TimeNow()
 	return Mima{
 		Title:    strings.TrimSpace(form.Title),
 		Label:    strings.TrimSpace(form.Label),
 		Username: strings.TrimSpace(form.Username),
 		Password: form.Password,
 		Notes:    strings.TrimSpace(form.Notes),
-		CTime:    util.TimeNow(),
+		CTime:    now,
+		MTime:    now,
 	}
 }
 

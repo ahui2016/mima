@@ -265,18 +265,18 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 }
 
 // SealedInsert inserts a new mima(without history).
-func (db *DB) SealedInsert(newMima Mima) (err error) {
+func (db *DB) SealedInsert(newMima Mima) (id string, err error) {
 	if newMima.ID, err = getNextID(db.DB, mima_id_key); err != nil {
 		return
 	}
 	sm, err := db.Encrypt(MimaWithHistory{Mima: newMima})
 	if err != nil {
-		return err
+		return
 	}
 	if err = insertSealed(db.DB, sm); err != nil {
 		return
 	}
-	return insertMima(db.TempDB, newMima)
+	return newMima.ID, insertMima(db.TempDB, newMima)
 }
 
 // sealedUpdate 用于修改 mima, 同时产生一条历史记录的情况。
