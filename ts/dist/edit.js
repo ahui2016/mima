@@ -1,6 +1,6 @@
 import { m, cc } from "./mj.js";
 import * as util from "./util.js";
-const id = util.getUrlParam('id');
+const id = util.getUrlParam("id");
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
 const titleArea = m("div")
@@ -32,6 +32,7 @@ const Form = cc("form", {
                 return;
             }
             const body = {
+                id: id,
                 title: title,
                 label: util.val(LabelInput, "trim"),
                 username: util.val(UsernameInput, "trim"),
@@ -40,14 +41,13 @@ const Form = cc("form", {
             };
             util.ajax({
                 method: "POST",
-                url: "/api/add",
+                url: "/api/edit",
                 alerts: FormAlerts,
                 buttonID: SubmitBtn.id,
                 body: body,
-            }, (resp) => {
-                const id = resp.message;
+            }, () => {
                 Form.elem().hide();
-                Alerts.clear().insert("success", `已成功添加 (id: ${id})`);
+                Alerts.clear().insert("success", `修改成功，可刷新页面查看结果。`);
             });
         }),
     ],
@@ -57,14 +57,14 @@ init();
 function init() {
     if (!id) {
         Loading.hide();
-        Alerts.insert('danger', '未指定 id');
+        Alerts.insert("danger", "未指定 id");
         return;
     }
     Form.elem().show();
     loadData();
 }
 function loadData() {
-    util.ajax({ method: 'POST', url: '/api/get-mima', alerts: Alerts, body: { id: id } }, (resp) => {
+    util.ajax({ method: "POST", url: "/api/get-mima", alerts: Alerts, body: { id: id } }, (resp) => {
         const mwh = resp;
         ID_Input.elem().val(mwh.ID);
         util.disable(ID_Input);

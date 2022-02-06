@@ -72,13 +72,20 @@ const InsertHistory = `INSERT INTO history (
 
 const GetMimaByID = `SELECT * FROM mima WHERE id=?;`
 
-const GetAllSimple = `SELECT id, title, label, username, ctime, mtime
+const GetAllSimple = `SELECT id, title, label, username, password, ctime, mtime
   FROM mima ORDER BY ctime DESC;`
 
 const CountAllMima = `SELECT count(*) FROM mima;`
 
-const GetByLabel = `SELECT id, title, label, username, ctime, mtime
+const GetByLabel = `SELECT id, title, label, username, password, ctime, mtime
   FROM mima WHERE label=? ORDER BY mtime DESC;`
 
-const GetByLabelAndTitle = `SELECT id, title, label, username, ctime, mtime
+const GetByLabelAndTitle = `SELECT id, title, label, username, password, ctime, mtime
   FROM mima WHERE label=? OR title LIKE ? ORDER BY mtime DESC;`
+
+const UpdateMima = `UPDATE mima SET
+  title=?, label=?, username=?, password=?, notes=?, mtime=?
+  WHERE id=?;`
+
+const GetHistories = `SELECT * FROM history WHERE mima_id=?
+  ORDER BY ctime;`

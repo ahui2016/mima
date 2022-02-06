@@ -71,17 +71,17 @@ func insertHistory(tx TX, h History) error {
 	return err
 }
 
-func insertMima(tx TX, mwh MimaWithHistory) error {
+func insertMima(tx TX, m Mima) error {
 	_, err := tx.Exec(
 		stmt.InsertMima,
-		mwh.ID,
-		mwh.Title,
-		mwh.Label,
-		mwh.Username,
-		mwh.Password,
-		mwh.Notes,
-		mwh.CTime,
-		mwh.MTime,
+		m.ID,
+		m.Title,
+		m.Label,
+		m.Username,
+		m.Password,
+		m.Notes,
+		m.CTime,
+		m.MTime,
 	)
 	return err
 }
@@ -106,6 +106,7 @@ func scanSimple(row Row) (m Mima, err error) {
 		&m.Title,
 		&m.Label,
 		&m.Username,
+		&m.Password,
 		&m.CTime,
 		&m.MTime,
 	)
@@ -117,6 +118,9 @@ func scanAllSimple(rows *sql.Rows) (all []Mima, err error) {
 		m, err := scanSimple(rows)
 		if err != nil {
 			return nil, err
+		}
+		if m.Password != "" {
+			m.Password = "******" // 为了告诉前端有密码(但不直接暴露密码)
 		}
 		all = append(all, m)
 	}
@@ -137,7 +141,7 @@ func scanAllSealed(rows *sql.Rows) (all []SealedMima, err error) {
 }
 
 func insertMWH(tx TX, mwh MimaWithHistory) error {
-	if err := insertMima(tx, mwh); err != nil {
+	if err := insertMima(tx, mwh.Mima); err != nil {
 		return err
 	}
 	for _, h := range mwh.History {
@@ -146,4 +150,20 @@ func insertMWH(tx TX, mwh MimaWithHistory) error {
 		}
 	}
 	return nil
+}
+
+func updateMima(tx TX, m Mima, h History) error {
+	if _, err := tx.Exec(
+		stmt.UpdateMima,
+		m.Title,
+		m.Label,
+		m.Username,
+		m.Password,
+		m.Notes,
+		m.MTime,
+		m.ID,
+	); err != nil {
+		return err
+	}
+	return insertHistory(tx, h)
 }

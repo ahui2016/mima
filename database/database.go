@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"ahui2016.github.com/mima/model"
@@ -40,12 +41,14 @@ type DB struct {
 	key     SecretKey
 }
 
+// mustBegin begins a db.TempDB transaction.
 func (db *DB) mustBegin() *sql.Tx {
 	tx, err := db.TempDB.Begin()
 	util.Panic(err)
 	return tx
 }
 
+// mustBegin begins a db.DB transaction.
 func (db *DB) sealedMustBegin() *sql.Tx {
 	tx, err := db.DB.Begin()
 	util.Panic(err)
@@ -185,9 +188,9 @@ func (db *DB) EncryptFirst(mwh MimaWithHistory) (SealedMima, error) {
 	return mwhToSM(mwh, db.userKey)
 }
 
-// mwhToSM uses db.key to encrypts a Mima.
-func (db *DB) Encrypt(m Mima) (SealedMima, error) {
-	return mwhToSM(MimaWithHistory{Mima: m}, db.key)
+// mwhToSM returns mwhToSM(mwh, db.key)
+func (db *DB) Encrypt(mwh MimaWithHistory) (SealedMima, error) {
+	return mwhToSM(mwh, db.key)
 }
 
 // mwhToSM encrypts a MimaWithHistory to a SealedMima.
@@ -261,18 +264,38 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 	return nil
 }
 
-func (db *DB) SealedInsert(m *Mima) (err error) {
-	if m.ID, err = getNextID(db.DB, mima_id_key); err != nil {
+// SealedInsert inserts a new mima(without history).
+func (db *DB) SealedInsert(newMima Mima) (err error) {
+	if newMima.ID, err = getNextID(db.DB, mima_id_key); err != nil {
 		return
 	}
-	sm, err := db.Encrypt(*m)
+	sm, err := db.Encrypt(MimaWithHistory{Mima: newMima})
 	if err != nil {
 		return err
 	}
 	if err = insertSealed(db.DB, sm); err != nil {
 		return
 	}
-	return insertMima(db.TempDB, MimaWithHistory{Mima: *m})
+	return insertMima(db.TempDB, newMima)
+}
+
+func (db *DB) sealedUpdate(mwh MimaWithHistory) (err error) {
+	sm, err := db.Encrypt(mwh)
+	if err != nil {
+		return err
+	}
+	tx := db.mustBegin()
+	defer tx.Rollback()
+
+	// mwh.History 的最后一个是新增的记录, 详见 db.UpdateMima
+	h := mwh.History[len(mwh.History)-1]
+	if err := updateMima(tx, mwh.Mima, h); err != nil {
+		return err
+	}
+	if err = updateSealed(db.DB, sm); err != nil {
+		return
+	}
+	return tx.Commit()
 }
 
 func (db *DB) GetMWH(id string) (_ MimaWithHistory, err error) {
@@ -315,4 +338,16 @@ func (db *DB) GetByLabelAndTitle(pattern string) ([]Mima, error) {
 		return nil, err
 	}
 	return scanAllSimple(rows)
+}
+
+func (db *DB) UpdateMima(m Mima) error {
+	mwh, err := db.GetMWH(m.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("not found (id: %s)", m.ID)
+	}
+	m.CTime = mwh.CTime      // CTime 以数据库中的数据为准（即保持原值）
+	m.MTime = util.TimeNow() // MTime 就是现在
+	mwh.Mima = m
+	mwh.History = append(mwh.History, model.HistoryFrom(m))
+	return db.sealedUpdate(mwh) // mwh.History 的最后一个是新增的记录
 }

@@ -68,6 +68,7 @@ func main() {
 	{
 		api.GET("/all", getAllSimple)
 		api.POST("/add", addHandler)
+		api.POST("/edit", editHandler)
 		api.POST("/get-mima", getMimaHandler)
 		api.POST("/search", searchHandler)
 	}

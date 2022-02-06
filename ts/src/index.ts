@@ -74,18 +74,27 @@ function MimaItem(mima: util.Mima): mjComponent {
             })
             .addClass("ml-2")
         ),
-      m("div").append(
-        span("username: ").addClass("text-grey"),
-        mima.Username,
-        util.LinkElem("#", { text: "(cp)" }),
-        span("password: ").addClass("text-grey ml-2"),
-        util.LinkElem("#", { text: "(cp)" })
-      ),
+      m("div").addClass('UsernamePassword'),
     ],
   });
   self.init = () => {
     if (mima.Label) {
       self.elem().find(".MimaLabel").show().text(`[${mima.Label}]`);
+    }
+    const details = self.elem().find('.UsernamePassword');
+    if (mima.Username) {
+      details.append(
+        span("username: ").addClass("text-grey"),
+        mima.Username,
+        util.LinkElem("#", { text: "(cp)" }),
+      );
+    }
+    if (mima.Password) {
+      details.append(
+        span("password: ").addClass("text-grey ml-2"),
+        '******',
+        util.LinkElem("#", { text: "(cp)" })
+      );
     }
   };
   return self;

@@ -3,7 +3,7 @@ import { noConflict } from "jquery";
 import { mjElement, mjComponent, m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 
-const id = util.getUrlParam('id');
+const id = util.getUrlParam("id");
 
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
@@ -43,6 +43,7 @@ const Form = cc("form", {
         return;
       }
       const body = {
+        id: id,
         title: title,
         label: util.val(LabelInput, "trim"),
         username: util.val(UsernameInput, "trim"),
@@ -52,15 +53,14 @@ const Form = cc("form", {
       util.ajax(
         {
           method: "POST",
-          url: "/api/add",
+          url: "/api/edit",
           alerts: FormAlerts,
           buttonID: SubmitBtn.id,
           body: body,
         },
-        (resp) => {
-          const id = (resp as util.Text).message;
+        () => {
           Form.elem().hide();
-          Alerts.clear().insert("success", `已成功添加 (id: ${id})`);
+          Alerts.clear().insert("success", `修改成功，可刷新页面查看结果。`);
         }
       );
     }),
@@ -74,7 +74,7 @@ init();
 function init() {
   if (!id) {
     Loading.hide();
-    Alerts.insert('danger', '未指定 id');
+    Alerts.insert("danger", "未指定 id");
     return;
   }
   Form.elem().show();
@@ -82,17 +82,21 @@ function init() {
 }
 
 function loadData() {
-  util.ajax({method:'POST',url:'/api/get-mima',alerts:Alerts,body:{id:id}},
-  (resp) => {
-    const mwh = resp as util.MimaWithHistory;
-    ID_Input.elem().val(mwh.ID);
-    util.disable(ID_Input);
-    TitleInput.elem().val(mwh.Title);
-    LabelInput.elem().val(mwh.Label);
-    UsernameInput.elem().val(mwh.Username);
-    PasswordInput.elem().val(mwh.Password);
-    NotesInput.elem().val(mwh.Notes);
-  }, undefined, () => {
-    Loading.hide();
-  });
+  util.ajax(
+    { method: "POST", url: "/api/get-mima", alerts: Alerts, body: { id: id } },
+    (resp) => {
+      const mwh = resp as util.MimaWithHistory;
+      ID_Input.elem().val(mwh.ID);
+      util.disable(ID_Input);
+      TitleInput.elem().val(mwh.Title);
+      LabelInput.elem().val(mwh.Label);
+      UsernameInput.elem().val(mwh.Username);
+      PasswordInput.elem().val(mwh.Password);
+      NotesInput.elem().val(mwh.Notes);
+    },
+    undefined,
+    () => {
+      Loading.hide();
+    }
+  );
 }

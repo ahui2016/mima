@@ -7,8 +7,9 @@ const NaviBar = cc("div", {
     classes: "my-5",
     children: [
         util.LinkElem("/", { text: "mima" }),
-        span(" .. Sign-in .. "),
+        span(" .. "),
         util.LinkElem("/public/change-pwd.html", { text: "change password" }),
+        span(" .. Sign-in"),
     ],
 });
 const GotoChangePwd = cc("div", {

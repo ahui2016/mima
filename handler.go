@@ -153,13 +153,23 @@ func changePwdHandler(c *gin.Context) {
 }
 
 func addHandler(c *gin.Context) {
-	var form model.EditForm
+	var form model.AddMimaForm
 	c.Bind(&form)
-	m := model.NewFrom(form)
-	if Err(c, db.SealedInsert(&m)) {
+	m := model.NewFromAdd(form)
+	if Err(c, db.SealedInsert(m)) {
 		return
 	}
 	c.JSON(OK, Text{m.ID})
+}
+
+func editHandler(c *gin.Context) {
+	var form model.EditMimaForm
+	c.Bind(&form)
+	m := model.NewFromEdit(form)
+	if Err(c, db.UpdateMima(m)) {
+		return
+	}
+	c.Status(OK)
 }
 
 func getMimaHandler(c *gin.Context) {

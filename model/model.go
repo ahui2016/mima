@@ -41,7 +41,7 @@ type Mima struct {
 // 	}
 // }
 
-type EditForm struct {
+type AddMimaForm struct {
 	Title    string `form:"title" binding:"required"`
 	Label    string `form:"label"`
 	Username string `form:"username"`
@@ -49,7 +49,7 @@ type EditForm struct {
 	Notes    string `form:"notes"`
 }
 
-func NewFrom(form EditForm) Mima {
+func NewFromAdd(form AddMimaForm) Mima {
 	return Mima{
 		Title:    strings.TrimSpace(form.Title),
 		Label:    strings.TrimSpace(form.Label),
@@ -57,6 +57,26 @@ func NewFrom(form EditForm) Mima {
 		Password: form.Password,
 		Notes:    strings.TrimSpace(form.Notes),
 		CTime:    util.TimeNow(),
+	}
+}
+
+type EditMimaForm struct {
+	ID       string `form:"id" binding:"required"`
+	Title    string `form:"title" binding:"required"`
+	Label    string `form:"label"`
+	Username string `form:"username"`
+	Password string `form:"password"`
+	Notes    string `form:"notes"`
+}
+
+func NewFromEdit(form EditMimaForm) Mima {
+	return Mima{
+		ID:       strings.TrimSpace(form.ID),
+		Title:    strings.TrimSpace(form.Title),
+		Label:    strings.TrimSpace(form.Label),
+		Username: strings.TrimSpace(form.Username),
+		Password: form.Password,
+		Notes:    strings.TrimSpace(form.Notes),
 	}
 }
 
@@ -68,4 +88,17 @@ type History struct {
 	Password string
 	Notes    string
 	CTime    int64 // History 的创建日期
+}
+
+// HistoryFrom 用于 m 被修改时生成一个记录，其中 History.CTime = m.MTime
+func HistoryFrom(m Mima) History {
+	return History{
+		ID:       RandomID(),
+		MimaID:   m.ID,
+		Title:    m.Title,
+		Username: m.Username,
+		Password: m.Password,
+		Notes:    m.Notes,
+		CTime:    m.MTime,
+	}
 }
