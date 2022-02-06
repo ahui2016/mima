@@ -71,6 +71,8 @@ func main() {
 		api.POST("/edit", editHandler)
 		api.POST("/get-mima", getMimaHandler)
 		api.POST("/search", searchHandler)
+		api.POST("/delete-history", deleteHistory)
+		api.POST("/delete-mima", deleteMima)
 	}
 
 	if err := r.Run(*addr); err != nil {

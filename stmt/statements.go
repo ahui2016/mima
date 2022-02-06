@@ -27,6 +27,7 @@ const GetAllSealed = `SELECT * FROM sealed_mima WHERE id<>?;`
 const InsertSealed = `INSERT INTO sealed_mima (id, secret) VALUES (?, ?);`
 const GetSealedByID = `SELECT * FROM sealed_mima WHERE id=?;`
 const UpdateSealed = `UPDATE sealed_mima SET secret=? WHERE id=?;`
+const DeleteSealed = `DELETE FROM sealed_mima WHERE id=?;`
 
 const CreateTempTables = `
 CREATE TABLE IF NOT EXISTS mima
@@ -89,3 +90,9 @@ const UpdateMima = `UPDATE mima SET
 
 const GetHistories = `SELECT * FROM history WHERE mima_id=?
   ORDER BY ctime;`
+
+const GetMimaIDByHistoryID = `SELECT mima_id FROM history WHERE id=?;`
+
+const DeleteHistory = `DELETE FROM history WHERE id=?;`
+
+const DeleteMima = `DELETE FROM mima WHERE id=?;`

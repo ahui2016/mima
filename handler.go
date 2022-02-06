@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -15,6 +17,10 @@ import (
 )
 
 const OK = http.StatusOK
+
+type idForm struct {
+	ID string `form:"id" binding:"required"`
+}
 
 // Text 用于向前端返回一个简单的文本消息。
 // 为了保持一致性，总是向前端返回 JSON, 因此即使是简单的文本消息也使用 JSON.
@@ -150,6 +156,7 @@ func changePwdHandler(c *gin.Context) {
 	if Err(c, db.ChangePassword(form.CurrentPwd, form.NewPwd)) {
 		return
 	}
+	c.Status(OK)
 }
 
 func addHandler(c *gin.Context) {
@@ -173,14 +180,15 @@ func editHandler(c *gin.Context) {
 }
 
 func getMimaHandler(c *gin.Context) {
-	type idForm struct {
-		ID string `form:"id" binding:"required"`
-	}
 	var form idForm
 	if BindCheck(c, &form) {
 		return
 	}
 	mwh, err := db.GetMWH(form.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		c.JSON(404, Text{"Not Found id:" + form.ID})
+		return
+	}
 	if Err(c, err) {
 		return
 	}
@@ -219,4 +227,26 @@ func searchHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(OK, all)
+}
+
+func deleteHistory(c *gin.Context) {
+	var form idForm
+	if BindCheck(c, &form) {
+		return
+	}
+	if Err(c, db.DeleteHistory(form.ID)) {
+		return
+	}
+	c.Status(OK)
+}
+
+func deleteMima(c *gin.Context) {
+	var form idForm
+	if BindCheck(c, &form) {
+		return
+	}
+	if Err(c, db.DeleteMima(form.ID)) {
+		return
+	}
+	c.Status(OK)
 }

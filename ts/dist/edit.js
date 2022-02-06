@@ -8,7 +8,7 @@ const NaviBar = cc("div", {
 });
 const HistoryList = cc("div");
 const HistoryArea = cc("div", {
-    children: [m("h3").text("History").addClass('mb-0'), m("hr"), m(HistoryList)],
+    children: [m("h3").text("History").addClass("mb-0"), m("hr"), m(HistoryList)],
 });
 const ID_Input = util.create_input();
 const TitleInput = util.create_input();
@@ -18,6 +18,11 @@ const PasswordInput = util.create_input();
 const NotesInput = util.create_textarea();
 const FormAlerts = util.CreateAlerts();
 const SubmitBtn = cc("button", { text: "Submit" });
+const DelBtn = cc("a", {
+    attr: { href: "#" },
+    text: "Delete",
+    classes: "ml-3",
+});
 const Form = cc("form", {
     children: [
         util.create_item(ID_Input, "ID", ""),
@@ -31,7 +36,7 @@ const Form = cc("form", {
             event.preventDefault();
             const title = util.val(TitleInput, "trim");
             if (!title) {
-                Alerts.insert("danger", "Title(标题)必填");
+                FormAlerts.insert("danger", "Title(标题)必填");
                 util.focus(TitleInput);
                 return;
             }
@@ -55,9 +60,34 @@ const Form = cc("form", {
                 Alerts.clear().insert("success", `修改成功，可刷新页面查看结果。`);
             });
         }),
+        m(DelBtn).on("click", (event) => {
+            event.preventDefault();
+            util.disable(DelBtn);
+            FormAlerts.insert("danger", "当 delete 按钮变红时，再点击一次可删除本页内容，不可恢复。");
+            setTimeout(() => {
+                util.enable(DelBtn);
+                DelBtn.elem()
+                    .css("color", "red")
+                    .off()
+                    .on("click", (e) => {
+                    e.preventDefault();
+                    util.ajax({
+                        method: "POST",
+                        url: "/api/delete-mima",
+                        alerts: FormAlerts,
+                        buttonID: DelBtn.id,
+                        body: { id: id },
+                    }, () => {
+                        FormAlerts.clear().insert("success", "已彻底删除本页内容，不可恢复");
+                        SubmitBtn.elem().hide();
+                        DelBtn.elem().hide();
+                    });
+                });
+            }, 2000);
+        }),
     ],
 });
-$("#root").append(m(NaviBar).addClass('my-3'), m(Loading).addClass('my-3'), m(Alerts).addClass('my-3'), m(Form).hide(), m(HistoryArea).addClass("my-5").hide());
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(Form).hide(), m(HistoryArea).addClass("my-5").hide());
 init();
 function init() {
     if (!id) {
@@ -65,12 +95,12 @@ function init() {
         Alerts.insert("danger", "未指定 id");
         return;
     }
-    Form.elem().show();
     loadData();
 }
 function loadData() {
     util.ajax({ method: "POST", url: "/api/get-mima", alerts: Alerts, body: { id: id } }, (resp) => {
         const mwh = resp;
+        Form.elem().show();
         ID_Input.elem().val(mwh.ID);
         util.disable(ID_Input);
         TitleInput.elem().val(mwh.Title);
@@ -93,7 +123,32 @@ function HistoryItem(h) {
         children: [
             m("div")
                 .addClass("HistoryTitleArea")
-                .append(span(`(${dayjs.unix(h.CTime).format("YYYY-MM-DD")})`).addClass("text-grey"), span(h.Title).addClass("ml-2")),
+                .append(span(`(${dayjs.unix(h.CTime).format("YYYY-MM-DD")})`).addClass("text-grey"), span(h.Title).addClass("ml-2"), util
+                .LinkElem("#", { text: "(del)" })
+                .attr({ title: "delete" })
+                .addClass("delBtn ml-2")
+                .on("click", (event) => {
+                event.preventDefault();
+                const delMsgElem = self.elem().find(".delMsg");
+                const delBtnID = self.id + " .delBtn";
+                const body = { id: h.ID };
+                util.ajax({
+                    method: "POST",
+                    url: "/api/delete-history",
+                    buttonID: delBtnID,
+                    body: body,
+                }, () => {
+                    $(delBtnID).hide();
+                    delMsgElem.show().text("已彻底删除，不可恢复。");
+                }, (_, errMsg) => {
+                    const time = dayjs().format("HH:mm:ss");
+                    delMsgElem.show().text(`${time} ${errMsg}`);
+                });
+            })),
+            m("div")
+                .text("已彻底删除，不可恢复。")
+                .addClass("delMsg ml-2 alert-danger")
+                .hide(),
             m("div").addClass("UsernamePassword"),
         ],
     });

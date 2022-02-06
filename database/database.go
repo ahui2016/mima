@@ -279,7 +279,8 @@ func (db *DB) SealedInsert(newMima Mima) (err error) {
 	return insertMima(db.TempDB, newMima)
 }
 
-func (db *DB) sealedUpdate(mwh MimaWithHistory) (err error) {
+// sealedUpdate 用于修改 mima, 同时产生一条历史记录的情况。
+func (db *DB) sealedUpdate(mwh MimaWithHistory) error {
 	sm, err := db.Encrypt(mwh)
 	if err != nil {
 		return err
@@ -293,9 +294,18 @@ func (db *DB) sealedUpdate(mwh MimaWithHistory) (err error) {
 		return err
 	}
 	if err = updateSealed(db.DB, sm); err != nil {
-		return
+		return err
 	}
 	return tx.Commit()
+}
+
+// updateSM 更新一个 SealedMima, 通常用于删除一条历史记录的情况。
+func (db *DB) updateSM(mwh MimaWithHistory) error {
+	sm, err := db.Encrypt(mwh)
+	if err != nil {
+		return err
+	}
+	return updateSealed(db.DB, sm)
 }
 
 func (db *DB) GetMWH(id string) (_ MimaWithHistory, err error) {
@@ -351,4 +361,59 @@ func (db *DB) UpdateMima(m Mima) error {
 	m.MTime = util.TimeNow() // MTime 就是现在
 	mwh.Mima = m             // 其他项的值来自 m
 	return db.sealedUpdate(mwh)
+}
+
+func (db *DB) DeleteMima(id string) error {
+	tx := db.mustBegin()
+	defer tx.Rollback()
+
+	// 必须先尝试删除临时数据库中的条目，后删除已加密的条目。
+	// 其中一个原因是，要防止删除 id 恰好等于 theVeryFirstID 的条目。
+	if _, err := tx.Exec(stmt.DeleteMima, id); err != nil {
+		return err
+	}
+	if err := db.SealedExec(stmt.DeleteSealed, id); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (db *DB) DeleteHistory(id string) error {
+	mimaID, err := getText1(db.TempDB, stmt.GetMimaIDByHistoryID, id)
+	if err != nil {
+		return err
+	}
+	mwh, err := db.GetMWH(mimaID)
+	if err != nil {
+		return err
+	}
+	i := findHistory(mwh.History, id)
+	if i < 0 {
+		// 这个错误一般不会发生（如果发生说明两个数据库的同步逻辑出问题了）
+		return fmt.Errorf("在 TempDB 中能找到 history.ID, 但在 mwh.History 中找不到。")
+	}
+	mwh.History = deleteFromHistory(mwh.History, i)
+
+	tx := db.mustBegin()
+	defer tx.Rollback()
+	if _, err := tx.Exec(stmt.DeleteHistory, id); err != nil {
+		return err
+	}
+	if err := db.updateSM(mwh); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func findHistory(histories []History, id string) int {
+	for i := range histories {
+		if histories[i].ID == id {
+			return i
+		}
+	}
+	return -1
+}
+
+func deleteFromHistory(arr []History, i int) []History {
+	return append(arr[:i], arr[i+1:]...)
 }
