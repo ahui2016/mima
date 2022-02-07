@@ -206,6 +206,9 @@ export function focus(obj) {
         obj.trigger("focus");
     }, 300);
 }
+/**
+ * 如果 id 以数字开头，就需要使用 itemID 给它改成以字母开头。
+ */
 export function itemID(id) {
     return `i${id}`;
 }
@@ -229,9 +232,16 @@ export function create_input(type = "text") {
     return cc("input", { attr: { type: type } });
 }
 export function create_item(comp, name, description, classes = "mb-3") {
+    var descElem;
+    if (typeof description == 'string') {
+        descElem = m("div").addClass("form-text").text(description);
+    }
+    else {
+        descElem = description;
+    }
     return m("div")
         .addClass(classes)
-        .append(m("label").addClass("form-label").attr({ for: comp.raw_id }).text(name), m(comp).addClass("form-textinput form-textinput-fat"), m("div").addClass("form-text").text(description));
+        .append(m("label").addClass("form-label").attr({ for: comp.raw_id }).text(name), m(comp).addClass("form-textinput form-textinput-fat"), descElem);
 }
 export function badge(name) {
     return span(name).addClass("badge-grey");

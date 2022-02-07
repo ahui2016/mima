@@ -1,6 +1,7 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
 import { m, cc, span } from "./mj.js";
 import * as util from "./util.js";
+import { create_color_pwd } from "./color-password.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
 const NaviBar = cc("div", {
@@ -18,7 +19,7 @@ const Form = cc("form", {
         util.create_item(TitleInput, "Title", "标题（必填）"),
         util.create_item(LabelInput, "Label", "标签，有利于搜索，也可当作分类，不同项目可使用同一个标签。"),
         util.create_item(UsernameInput, "Username", ""),
-        util.create_item(PasswordInput, "Password", ""),
+        create_color_pwd(PasswordInput),
         util.create_item(NotesInput, "Notes", ""),
         m(FormAlerts),
         m(SubmitBtn).on("click", (event) => {
@@ -51,7 +52,7 @@ const Form = cc("form", {
     ],
 });
 const GotoSignIn = util.CreateGotoSignIn();
-$("#root").append(m(NaviBar).addClass('my-3'), m(Loading).addClass('my-3'), m(Alerts).addClass('my-3'), m(GotoSignIn).hide(), m(Form).hide());
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(GotoSignIn).hide(), m(Form).hide());
 init();
 function init() {
     checkSignIn();

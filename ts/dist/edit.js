@@ -1,5 +1,6 @@
 import { m, cc, span, prependToList } from "./mj.js";
 import * as util from "./util.js";
+import { create_color_pwd } from "./color-password.js";
 const id = util.getUrlParam("id");
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
@@ -29,7 +30,7 @@ const Form = cc("form", {
         util.create_item(TitleInput, "Title", "标题（必填）"),
         util.create_item(LabelInput, "Label", "标签，有利于搜索，也可当作分类，不同项目可使用同一个标签。"),
         util.create_item(UsernameInput, "Username", ""),
-        util.create_item(PasswordInput, "Password", ""),
+        create_color_pwd(PasswordInput),
         util.create_item(NotesInput, "Notes", ""),
         m(FormAlerts),
         m(SubmitBtn).on("click", (event) => {
@@ -112,13 +113,18 @@ function loadData() {
             HistoryArea.elem().show();
             prependToList(HistoryList, mwh.History.map(HistoryItem));
         }
+        if (mwh.Password) {
+            setTimeout(() => {
+                $("#" + "ColorPwdToggleBtn").trigger("click");
+            }, 1000);
+        }
     }, undefined, () => {
         Loading.hide();
     });
 }
 function HistoryItem(h) {
     const self = cc("div", {
-        id: h.ID,
+        id: util.itemID(h.ID),
         classes: "HistoryItem",
         children: [
             m("div")

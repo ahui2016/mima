@@ -292,6 +292,9 @@ export function focus(obj: mjElement | mjComponent): void {
   }, 300);
 }
 
+/** 
+ * 如果 id 以数字开头，就需要使用 itemID 给它改成以字母开头。
+ */
 export function itemID(id: string): string {
   return `i${id}`;
 }
@@ -321,15 +324,21 @@ export function create_input(type: string = "text"): mjComponent {
 export function create_item(
   comp: mjComponent,
   name: string,
-  description: string,
+  description: string | mjElement,
   classes = "mb-3"
 ): mjElement {
+  var descElem: mjElement;
+  if (typeof description == 'string') {
+    descElem = m("div").addClass("form-text").text(description);
+  } else {
+    descElem = description;
+  }
   return m("div")
     .addClass(classes)
     .append(
       m("label").addClass("form-label").attr({ for: comp.raw_id }).text(name),
       m(comp).addClass("form-textinput form-textinput-fat"),
-      m("div").addClass("form-text").text(description)
+      descElem
     );
 }
 
