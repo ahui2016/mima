@@ -73,6 +73,7 @@ func main() {
 		api.POST("/search", searchHandler)
 		api.POST("/delete-history", deleteHistory)
 		api.POST("/delete-mima", deleteMima)
+		api.POST("/get-pwd", getPassword)
 	}
 
 	if err := r.Run(*addr); err != nil {

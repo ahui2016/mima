@@ -251,3 +251,15 @@ func deleteMima(c *gin.Context) {
 	}
 	c.Status(OK)
 }
+
+func getPassword(c *gin.Context) {
+	var form idForm
+	if BindCheck(c, &form) {
+		return
+	}
+	pwd, err := db.GetPassword(form.ID)
+	if Err(c, err) {
+		return
+	}
+	c.JSON(OK, Text{pwd})
+}

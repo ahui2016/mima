@@ -109,13 +109,13 @@ function loadData() {
         UsernameInput.elem().val(mwh.Username);
         PasswordInput.elem().val(mwh.Password);
         NotesInput.elem().val(mwh.Notes);
-        if (mwh.History) {
+        if (mwh.History && mwh.History.length > 0) {
             HistoryArea.elem().show();
             prependToList(HistoryList, mwh.History.map(HistoryItem));
         }
         if (mwh.Password) {
             setTimeout(() => {
-                $("#" + "ColorPwdToggleBtn").trigger("click");
+                $("#ColorPwdToggleBtn").trigger("click");
             }, 1000);
         }
     }, undefined, () => {
@@ -123,6 +123,7 @@ function loadData() {
     });
 }
 function HistoryItem(h) {
+    const HistoryAlerts = util.CreateAlerts();
     const self = cc("div", {
         id: util.itemID(h.ID),
         classes: "HistoryItem",
@@ -135,26 +136,20 @@ function HistoryItem(h) {
                 .addClass("delBtn ml-2")
                 .on("click", (event) => {
                 event.preventDefault();
-                const delMsgElem = self.elem().find(".delMsg");
                 const delBtnID = self.id + " .delBtn";
                 const body = { id: h.ID };
                 util.ajax({
                     method: "POST",
                     url: "/api/delete-history",
+                    alerts: HistoryAlerts,
                     buttonID: delBtnID,
                     body: body,
                 }, () => {
                     $(delBtnID).hide();
-                    delMsgElem.show().text("已彻底删除，不可恢复。");
-                }, (_, errMsg) => {
-                    const time = dayjs().format("HH:mm:ss");
-                    delMsgElem.show().text(`${time} ${errMsg}`);
+                    HistoryAlerts.insert('danger', "已彻底删除，不可恢复。");
                 });
             })),
-            m("div")
-                .text("已彻底删除，不可恢复。")
-                .addClass("delMsg ml-2 alert-danger")
-                .hide(),
+            m(HistoryAlerts),
             m("div").addClass("UsernamePassword"),
         ],
     });

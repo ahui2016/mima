@@ -73,6 +73,8 @@ const InsertHistory = `INSERT INTO history (
 
 const GetMimaByID = `SELECT * FROM mima WHERE id=?;`
 
+const GetPassword = `SELECT password FROM mima WHERE id=?;`
+
 const GetAllSimple = `SELECT id, title, label, username, password, ctime, mtime
   FROM mima ORDER BY ctime DESC;`
 

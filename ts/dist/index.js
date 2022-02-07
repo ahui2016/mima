@@ -1,6 +1,7 @@
 // 采用受 Mithril 启发的基于 jQuery 实现的极简框架 https://github.com/ahui2016/mj.js
-import { m, cc, span, appendToList } from "./mj.js";
+import { m, cc, appendToList } from "./mj.js";
 import * as util from "./util.js";
+import { MimaItem } from "./mima-item.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
 const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
@@ -13,7 +14,8 @@ const NaviBar = cc("div", {
 });
 const GotoSignIn = util.CreateGotoSignIn();
 const MimaList = cc("div");
-$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"));
+const TextForCopy = cc('input', { id: 'TextForCopy' });
+$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), m(TextForCopy).hide());
 init();
 function init() {
     getAll();
@@ -35,34 +37,4 @@ function getAll() {
     }, () => {
         Loading.hide();
     });
-}
-function MimaItem(mima) {
-    const self = cc("div", {
-        id: mima.ID,
-        classes: "MimaItem",
-        children: [
-            m("div")
-                .addClass("MimaTitleArea")
-                .append(span(`[id: ${mima.ID}]`).addClass("text-grey"), span("").addClass("MimaLabel ml-2").hide(), util
-                .LinkElem("/public/edit.html?id=" + mima.ID, {
-                text: mima.Title,
-                blank: true,
-            })
-                .addClass("ml-2")),
-            m("div").addClass('UsernamePassword'),
-        ],
-    });
-    self.init = () => {
-        if (mima.Label) {
-            self.elem().find(".MimaLabel").show().text(`[${mima.Label}]`);
-        }
-        const details = self.elem().find('.UsernamePassword');
-        if (mima.Username) {
-            details.append(span("username: ").addClass("text-grey"), mima.Username, util.LinkElem("#", { text: "(cp)" }));
-        }
-        if (mima.Password) {
-            details.append(span("password: ").addClass("text-grey ml-2"), '******', util.LinkElem("#", { text: "(cp)" }));
-        }
-    };
-    return self;
 }

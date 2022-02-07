@@ -350,6 +350,10 @@ func (db *DB) GetByLabelAndTitle(pattern string) ([]Mima, error) {
 	return scanAllSimple(rows)
 }
 
+func (db *DB) GetPassword(id string) (string, error) {
+	return getText1(db.TempDB, stmt.GetPassword, id)
+}
+
 func (db *DB) UpdateMima(m Mima) error {
 	mwh, err := db.GetMWH(m.ID)
 	if errors.Is(err, sql.ErrNoRows) {

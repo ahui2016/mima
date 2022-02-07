@@ -43,6 +43,7 @@ function toggleColorPwd(comp: mjComponent) {
   comp.elem().toggle();
   ColorPassword.elem().toggle();
   refreshColorPwd(comp);
+  util.focus(comp);
 }
 
 function refreshColorPwd(comp: mjComponent) {

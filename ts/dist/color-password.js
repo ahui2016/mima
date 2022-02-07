@@ -29,6 +29,7 @@ function toggleColorPwd(comp) {
     comp.elem().toggle();
     ColorPassword.elem().toggle();
     refreshColorPwd(comp);
+    util.focus(comp);
 }
 function refreshColorPwd(comp) {
     ColorPassword.elem().html("");
