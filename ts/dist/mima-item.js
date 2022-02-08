@@ -14,7 +14,7 @@ export function MimaItem(mima) {
                 text: mima.Title,
                 blank: true,
             })
-                .addClass("ml-2")),
+                .addClass("font-bold ml-2")),
             m("div").addClass("UsernamePassword"),
             m(ItemAlerts),
         ],

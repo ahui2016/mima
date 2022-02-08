@@ -25,9 +25,11 @@
 .text-center {
   text-align: center;
 }
-
 .text-right {
   text-align: right;
+}
+.font-bold {
+  font-weight: bold;
 }
 
 .HistoryItem,

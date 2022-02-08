@@ -27,6 +27,9 @@ func main() {
 	}
 	r := gin.New()
 	r.Use(gin.Recovery())
+	if *debug {
+		r.Use(gin.Logger())
+	}
 	r.SetTrustedProxies(nil)
 	sessionStore := cookie.NewStore(generateRandomKey())
 	r.Use(sessions.Sessions(sessionName, sessionStore))
