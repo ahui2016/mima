@@ -74,6 +74,7 @@ func main() {
 		api.POST("/delete-history", deleteHistory)
 		api.POST("/delete-mima", deleteMima)
 		api.POST("/get-pwd", getPassword)
+		api.POST("/upload-json", importHandler)
 	}
 
 	if err := r.Run(*addr); err != nil {

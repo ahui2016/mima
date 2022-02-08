@@ -67,13 +67,15 @@ func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 	}
 }
 
+// Sleep 在 debug 模式中暂停一秒模拟网络缓慢的情形。
 func Sleep() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		s, err := db.GetSettings()
-		if Err(c, err) {
+		if err != nil {
+			c.AbortWithStatusJSON(500, Text{err.Error()})
 			return
 		}
-		if s.Delay {
+		if *debug && s.Delay {
 			time.Sleep(time.Second)
 		}
 		c.Next()
@@ -262,4 +264,11 @@ func getPassword(c *gin.Context) {
 		return
 	}
 	c.JSON(OK, Text{pwd})
+}
+
+func importHandler(c *gin.Context) {
+	_, err := c.FormFile("file")
+	if Err(c, err) {
+		return
+	}
 }
