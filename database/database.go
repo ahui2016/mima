@@ -264,6 +264,29 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 	return nil
 }
 
+// Import from https://github.com/ahui2016/mima-web
+func (db *DB) Import(items []MimaWithHistory) error {
+	tx1 := db.sealedMustBegin()
+	tx2 := db.mustBegin()
+	defer tx1.Rollback()
+	defer tx2.Rollback()
+
+	for _, mwh := range items {
+		mwh.ID = "i" + mwh.ID      // 为了配合前端，必须以字母开头（原 ID 有可能以数字开头）
+		sm, err := db.Encrypt(mwh) // 这句不涉及数据库操作
+		if err != nil {
+			return err
+		}
+		if err = insertSealed(tx1, sm); err != nil {
+			return err
+		}
+		if err = insertMima(tx2, mwh.Mima); err != nil {
+			return err
+		}
+	}
+	return util.WrapErrors(tx1.Commit(), tx2.Commit())
+}
+
 // SealedInsert inserts a new mima(without history).
 func (db *DB) SealedInsert(newMima Mima) (id string, err error) {
 	if newMima.ID, err = getNextID(db.DB, mima_id_key); err != nil {

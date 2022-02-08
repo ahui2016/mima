@@ -3,9 +3,11 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -28,7 +30,7 @@ type Text struct {
 	Message string `json:"message"`
 }
 
-func Err(c *gin.Context, err error) bool {
+func checkErr(c *gin.Context, err error) bool {
 	if err != nil {
 		c.JSON(500, Text{err.Error()})
 		return true
@@ -108,25 +110,19 @@ func signInHandler(c *gin.Context) {
 
 	// 如果前面的 checkPasswordAndIP 验证了密码正确，则数据库的密钥会被正确设置，
 	// 因此在这里可以解密数据库，并填充解密后的临时数据库。
-	if Err(c, db.RefillTempDB()) {
+	if checkErr(c, db.RefillTempDB()) {
 		return
 	}
 
 	options := newNormalOptions()
 	session := sessions.Default(c)
-	if Err(c, sessionSet(session, true, options)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, sessionSet(session, true, options))
 }
 
 func signOutHandler(c *gin.Context) {
 	options := newExpireOptions()
 	session := sessions.Default(c)
-	if Err(c, sessionSet(session, false, options)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, sessionSet(session, false, options))
 }
 
 func isDefaultPwd(c *gin.Context) {
@@ -136,7 +132,7 @@ func isDefaultPwd(c *gin.Context) {
 		return
 	}
 	yes, err := db.IsDefaultPwd()
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, yes)
@@ -155,10 +151,7 @@ func changePwdHandler(c *gin.Context) {
 	if checkPasswordAndIP(c, form.CurrentPwd) {
 		return
 	}
-	if Err(c, db.ChangePassword(form.CurrentPwd, form.NewPwd)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, db.ChangePassword(form.CurrentPwd, form.NewPwd))
 }
 
 func addHandler(c *gin.Context) {
@@ -166,7 +159,7 @@ func addHandler(c *gin.Context) {
 	c.Bind(&form)
 	m := model.NewFromAdd(form)
 	id, err := db.SealedInsert(m)
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, Text{id})
@@ -176,10 +169,7 @@ func editHandler(c *gin.Context) {
 	var form model.EditMimaForm
 	c.Bind(&form)
 	m := model.NewFromEdit(form)
-	if Err(c, db.UpdateMima(m)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, db.UpdateMima(m))
 }
 
 func getMimaHandler(c *gin.Context) {
@@ -192,7 +182,7 @@ func getMimaHandler(c *gin.Context) {
 		c.JSON(404, Text{"Not Found id:" + form.ID})
 		return
 	}
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, mwh)
@@ -200,7 +190,7 @@ func getMimaHandler(c *gin.Context) {
 
 func getAllSimple(c *gin.Context) {
 	all, err := db.GetAllSimple()
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, all)
@@ -226,7 +216,7 @@ func searchHandler(c *gin.Context) {
 	} else {
 		err = fmt.Errorf("unknown mode: %s", form.Mode)
 	}
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, all)
@@ -237,10 +227,7 @@ func deleteHistory(c *gin.Context) {
 	if BindCheck(c, &form) {
 		return
 	}
-	if Err(c, db.DeleteHistory(form.ID)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, db.DeleteHistory(form.ID))
 }
 
 func deleteMima(c *gin.Context) {
@@ -248,10 +235,7 @@ func deleteMima(c *gin.Context) {
 	if BindCheck(c, &form) {
 		return
 	}
-	if Err(c, db.DeleteMima(form.ID)) {
-		return
-	}
-	c.Status(OK)
+	checkErr(c, db.DeleteMima(form.ID))
 }
 
 func getPassword(c *gin.Context) {
@@ -260,15 +244,30 @@ func getPassword(c *gin.Context) {
 		return
 	}
 	pwd, err := db.GetPassword(form.ID)
-	if Err(c, err) {
+	if checkErr(c, err) {
 		return
 	}
 	c.JSON(OK, Text{pwd})
 }
 
 func importHandler(c *gin.Context) {
-	_, err := c.FormFile("file")
-	if Err(c, err) {
+	f, err := c.FormFile("file")
+	if checkErr(c, err) {
 		return
 	}
+	src, err := f.Open()
+	if checkErr(c, err) {
+		return
+	}
+	defer src.Close()
+
+	data, err := ioutil.ReadAll(src)
+	if checkErr(c, err) {
+		return
+	}
+	var items []model.MimaWithHistory
+	if checkErr(c, json.Unmarshal(data, &items)) {
+		return
+	}
+	checkErr(c, db.Import(items))
 }

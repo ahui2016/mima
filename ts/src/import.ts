@@ -17,6 +17,10 @@ const NaviBar = cc("div", {
       }),
       " 是本程序的前身)"
     ),
+    m("p").append(
+      "建议导入前先备份",
+      util.LinkElem("/public/backup.html").addClass("ml-2")
+    ),
   ],
 });
 
@@ -48,7 +52,8 @@ const UploadForm = cc("form", {
           body: body,
         },
         () => {
-          Alerts.insert("success", "OK");
+          Alerts.insert("success", "导入完成");
+          UploadForm.elem().hide();
         }
       );
     }),
