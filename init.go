@@ -28,7 +28,7 @@ func init() {
 	userConfigDir, err := os.UserConfigDir()
 	util.Panic(err)
 	configFolder := filepath.Join(userConfigDir, AppConfigFolder)
-	os.MkdirAll(configFolder, 0640)
+	util.Panic(os.MkdirAll(configFolder, 0740))
 	dbPath := filepath.Join(configFolder, dbFileName)
 	fmt.Println("[Database]", dbPath)
 

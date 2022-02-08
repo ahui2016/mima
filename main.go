@@ -25,7 +25,8 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 		log.Print("[Listen and serve] ", *addr)
 	}
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
 	sessionStore := cookie.NewStore(generateRandomKey())
 	r.Use(sessions.Sessions(sessionName, sessionStore))

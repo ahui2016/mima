@@ -7,7 +7,12 @@ const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
 
 const NaviBar = cc("div", {
-  children: [util.LinkElem("/", { text: "mima" }), span(" .. Add an item")],
+  children: [
+    util.LinkElem("/", { text: "mima" }),
+    span(" .. "),
+    util.LinkElem("/public/import.html", { text: "Import" }),
+    span(" .. Add an item"),
+  ],
 });
 
 const TitleInput = util.create_input();

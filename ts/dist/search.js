@@ -5,13 +5,12 @@ import { MimaItem } from "./mima-item.js";
 var searchMode = "LabelOnly";
 const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
-const titleArea = m("div").append(m("h1").text("mima"));
 const GotoSignOut = cc("a", {
     text: "Sign-out",
     attr: { href: "/public/sign-in.html" },
 });
 const NaviBar = cc("div", {
-    classes: "text-right mb-5",
+    classes: "text-right",
     children: [
         util.LinkElem("/public/index.html", { text: "Index" }),
         util.LinkElem("/public/add.html", { text: "Add" }).addClass("ml-2"),
@@ -65,7 +64,7 @@ const SearchForm = cc("form", {
 });
 const MimaList = cc("div");
 const TextForCopy = cc('input', { id: 'TextForCopy' });
-$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), m(TextForCopy).hide());
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), m(TextForCopy).hide());
 init();
 function init() {
     checkSignIn();
