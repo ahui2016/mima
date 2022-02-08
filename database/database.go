@@ -272,15 +272,22 @@ func (db *DB) Import(items []MimaWithHistory) error {
 	defer tx2.Rollback()
 
 	for _, mwh := range items {
-		mwh.ID = "i" + mwh.ID      // 为了配合前端，必须以字母开头（原 ID 有可能以数字开头）
-		sm, err := db.Encrypt(mwh) // 这句不涉及数据库操作
+		mwh.ID = "i" + mwh.ID // 为了配合前端，必须以字母开头（原 ID 有可能以数字开头）
+		if err := insertMima(tx2, mwh.Mima); err != nil {
+			return err
+		}
+		for i := range mwh.History {
+			mwh.History[i].MimaID = mwh.ID
+			if err := insertHistory(tx2, mwh.History[i]); err != nil {
+				return err
+			}
+		}
+		// 必须经过上面对 mwh.ID 及 mwh.History[i].MimaID 修改后才能加密保存。
+		sm, err := db.Encrypt(mwh)
 		if err != nil {
 			return err
 		}
 		if err = insertSealed(tx1, sm); err != nil {
-			return err
-		}
-		if err = insertMima(tx2, mwh.Mima); err != nil {
 			return err
 		}
 	}
