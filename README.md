@@ -1,12 +1,25 @@
 # mima
-a password manager with CLI and Web interfaces (一个拥有命令行和网页两种界面的密码管理器)
 
+Just another password manager.
+
+本软件是一个有特色的密码管理器，既可架设到服务器中，也可在本地运行，通过访问网页使用（因此不同的电脑、手机系统都可使用，也不用考虑同步，这使得程序代码可以非常简单）。
+
+采用简单有效的 NaCl (libsodium) 加密方式，该方式以 “容易正确处理” 为最大特点，
+因此可以确保加密过程得到正确处理。
+
+
+## Install (绿色软件，开箱即用)
+
+本软件采用了 Go 语言的 embed 技术，把静态资源也打包到程序中，因此不需要安装，直接下载一个文件，通过点击或命令行启动程序，即可立即使用。
+
+默认端口是 80, 启动程序后用浏览器访问 http://127.0.0.1 即可打开程序界面。
+
+可使用 `-addr` 参数修改端口，例如:
+
+```sh
+mima.exe -addr 127.0.0.1:8080
+```
+
+如果你有服务器，配合 Nginx 或 Caddy 如果架设一个真正的网站
 https://blog.carlmjohnson.net/post/2021/how-to-use-go-embed/
-
-如果启动程序时遇到类似以下错误：
-
-```
-[Database] /home/ahui/.config/github-ahui2016/mima/db-mima.sqlite
-panic: unable to open database file: permission denied
-```
 

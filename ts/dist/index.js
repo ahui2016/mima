@@ -21,7 +21,7 @@ const footerElem = m("div")
     .append(util
     .LinkElem("https://github.com/ahui2016/mima", { blank: true })
     .addClass("FooterLink"));
-$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(GotoSignIn).addClass("my-3").hide(), m(MimaList).addClass("mt-3"), m(TextForCopy).hide(), footerElem);
+$("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(GotoSignIn).addClass("my-3").hide(), m(MimaList).addClass("mt-3"), footerElem.hide(), m(TextForCopy).hide());
 init();
 function init() {
     getAll();
@@ -31,6 +31,9 @@ function getAll() {
         const all = resp;
         if (all && all.length > 0) {
             appendToList(MimaList, all.map(MimaItem));
+            if (all.length >= 5) {
+                footerElem.show();
+            }
         }
         else {
             Alerts.insert("info", "空空如也");

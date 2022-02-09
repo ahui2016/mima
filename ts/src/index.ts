@@ -38,8 +38,8 @@ $("#root").append(
   m(Alerts),
   m(GotoSignIn).addClass("my-3").hide(),
   m(MimaList).addClass("mt-3"),
+  footerElem.hide(),
   m(TextForCopy).hide(),
-  footerElem
 );
 
 init();
@@ -55,6 +55,9 @@ function getAll() {
       const all = resp as util.Mima[];
       if (all && all.length > 0) {
         appendToList(MimaList, all.map(MimaItem));
+        if (all.length >= 5) {
+          footerElem.show();
+        }
       } else {
         Alerts.insert("info", "空空如也");
       }

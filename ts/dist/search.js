@@ -49,6 +49,12 @@ const SearchForm = cc("form", {
                     Alerts.insert("success", `找到 ${items.length} 条结果`);
                     clear_list(MimaList);
                     appendToList(MimaList, items.map(MimaItem));
+                    if (items.length < 5) {
+                        footerElem.hide();
+                    }
+                    else {
+                        footerElem.show();
+                    }
                 }
                 else {
                     Alerts.insert("info", "找不到。");
@@ -63,8 +69,13 @@ const SearchForm = cc("form", {
     ],
 });
 const MimaList = cc("div");
-const TextForCopy = cc('input', { id: 'TextForCopy' });
-$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), m(TextForCopy).hide());
+const footerElem = m("div")
+    .addClass("Footer")
+    .append(util
+    .LinkElem("https://github.com/ahui2016/mima", { blank: true })
+    .addClass("FooterLink"));
+const TextForCopy = cc("input", { id: "TextForCopy" });
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), footerElem.hide(), m(TextForCopy).hide());
 init();
 function init() {
     checkSignIn();

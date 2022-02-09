@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed static
-var staticHTML embed.FS
+var staticFiles embed.FS
 
 //go:embed ts/dist/*.js
 var staticJS embed.FS
@@ -34,13 +34,9 @@ func main() {
 	sessionStore := cookie.NewStore(generateRandomKey())
 	r.Use(sessions.Sessions(sessionName, sessionStore))
 
-	// https://github.com/gin-gonic/gin/issues/2697
-	// e.IPExtractor = echo.ExtractIPFromXFFHeader()
-	// e.HTTPErrorHandler = errorHandler
-
 	// release mode 使用 embed 的文件，否则使用当前目录的 static 文件。
 	if gin.Mode() == gin.ReleaseMode {
-		r.StaticFS("/public", EmbedFolder(staticHTML, "static"))
+		r.StaticFS("/public", EmbedFolder(staticFiles, "static"))
 		// 这个 Group 只是为了给 StaticFS 添加 middleware
 		r.Group("/js", JavaScriptHeader()).
 			StaticFS("/", EmbedFolder(staticJS, "ts/dist"))
@@ -49,8 +45,12 @@ func main() {
 		r.Group("/js", JavaScriptHeader()).Static("/", "ts/dist")
 	}
 
+	r.GET("/robots.txt", func(c *gin.Context) {
+		c.FileFromFS("/robots.txt", EmbedFolder(staticFiles, "static"))
+	})
+
 	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/public/favicon.ico")
+		c.FileFromFS("/favicon.ico", EmbedFolder(staticFiles, "static"))
 	})
 
 	r.GET("/", func(c *gin.Context) {
