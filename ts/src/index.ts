@@ -9,10 +9,11 @@ const Loading = util.CreateLoading("center");
 const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
 
 const NaviBar = cc("div", {
-  classes: "text-right mb-3",
+  classes: "text-right",
   children: [
     util.LinkElem("/public/search.html", { text: "Search" }),
     util.LinkElem("/public/add.html", { text: "Add" }).addClass("ml-2"),
+    util.LinkElem("/public/backup.html", { text: "Backup" }).addClass("ml-2"),
   ],
 });
 
@@ -20,16 +21,25 @@ const GotoSignIn = util.CreateGotoSignIn();
 
 const MimaList = cc("div");
 
-const TextForCopy = cc('input', {id:'TextForCopy'});
+const TextForCopy = cc("input", { id: "TextForCopy" });
+
+const footerElem = m("div")
+  .addClass("Footer")
+  .append(
+    util
+      .LinkElem("https://github.com/ahui2016/mima", { blank: true })
+      .addClass("FooterLink")
+  );
 
 $("#root").append(
   titleArea,
   m(NaviBar),
   m(Loading).addClass("my-3"),
   m(Alerts),
-  m(GotoSignIn).hide(),
+  m(GotoSignIn).addClass("my-3").hide(),
   m(MimaList).addClass("mt-3"),
-  m(TextForCopy).hide()
+  m(TextForCopy).hide(),
+  footerElem
 );
 
 init();

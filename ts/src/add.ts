@@ -75,7 +75,8 @@ $("#root").append(
   m(Loading).addClass("my-3"),
   m(Alerts).addClass("my-3"),
   m(GotoSignIn).hide(),
-  m(Form).hide()
+  m(Form).hide(),
+  m('div').text('.').addClass('Footer'),
 );
 
 init();

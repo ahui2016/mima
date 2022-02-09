@@ -38,8 +38,20 @@
 }
 
 .ColorPassword {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
   font-size: 2rem;
   letter-spacing: 3px;
+}
+
+.Footer,
+.FooterLink {
+  margin-top: 5rem;
+  margin-bottom: 5rem;
+  text-align: center;
+  font-size: .75rem;
+  text-decoration: none;
+  color: grey !important;
 }
 
 .pl-2 {
@@ -88,12 +100,6 @@
     --default-color: #454545;
     --grey: #a1a1aa;
   }
-  .alert-danger {
-    color: #e64980;
-  }
-  .alert-success {
-    color: #0ca678;
-  }
   .alert-primary {
     color: black;
   }
@@ -104,4 +110,12 @@
   .form-text {
     color: var(--grey);
   }
+}
+
+/* 这两个颜色, light 与 dark 两个主题里都好看 */
+.alert-danger {
+  color: #e64980;
+}
+.alert-success {
+  color: #0ca678;
 }

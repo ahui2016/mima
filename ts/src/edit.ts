@@ -118,7 +118,8 @@ $("#root").append(
   m(Loading).addClass("my-3"),
   m(Alerts).addClass("my-3"),
   m(Form).hide(),
-  m(HistoryArea).addClass("my-5").hide()
+  m(HistoryArea).addClass("my-5").hide(),
+  m('div').text('.').addClass('Footer'),
 );
 
 init();

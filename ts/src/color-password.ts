@@ -50,9 +50,9 @@ function refreshColorPwd(comp: mjComponent) {
   ColorPassword.elem().html("");
   for (let n of util.val(comp, "trim")) {
     if (isNaN(Number(n))) {
-      ColorPassword.elem().append(span(n).css({ color: "blue" }));
+      ColorPassword.elem().append(span(n).css({ color: "green" }));
     } else {
-      ColorPassword.elem().append(span(n).css({ color: "red" }));
+      ColorPassword.elem().append(span(n).css({ color: "orangered" }));
     }
   }
 }

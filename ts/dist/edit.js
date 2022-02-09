@@ -88,7 +88,7 @@ const Form = cc("form", {
         }),
     ],
 });
-$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(Form).hide(), m(HistoryArea).addClass("my-5").hide());
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(Form).hide(), m(HistoryArea).addClass("my-5").hide(), m('div').text('.').addClass('Footer'));
 init();
 function init() {
     if (!id) {

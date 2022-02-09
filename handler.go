@@ -271,3 +271,7 @@ func importHandler(c *gin.Context) {
 	}
 	checkErr(c, db.Import(items))
 }
+
+func downloadBackup(c *gin.Context) {
+	c.FileAttachment(db.Path, dbFileName)
+}

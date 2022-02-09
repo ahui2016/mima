@@ -57,7 +57,7 @@ const Form = cc("form", {
     ],
 });
 const GotoSignIn = util.CreateGotoSignIn();
-$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(GotoSignIn).hide(), m(Form).hide());
+$("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(Alerts).addClass("my-3"), m(GotoSignIn).hide(), m(Form).hide(), m('div').text('.').addClass('Footer'));
 init();
 function init() {
     checkSignIn();
