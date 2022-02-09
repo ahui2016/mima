@@ -65,6 +65,7 @@ const SignInForm = cc("form", {
                 PwdInput.elem().val("");
                 SignInForm.elem().hide();
                 Alerts.clear().insert("success", "成功登入");
+                setMyIP();
                 SignOutArea.elem().show();
             }, (that, errMsg) => {
                 if (that.status == 401) {
@@ -79,7 +80,44 @@ const SignInForm = cc("form", {
         })),
     ],
 });
-$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(SignInForm).hide(), m(Alerts), m(SignOutArea).hide(), m(GotoChangePwd).hide());
+function myIPElem() {
+    return span("").addClass("MyIP");
+}
+function gotoTrusted(text = "白名单") {
+    return util.LinkElem("/public/change-pwd", {
+        text: text,
+        blank: true,
+    });
+}
+const TrustedIP_Area = cc("div", {
+    children: [
+        span("你的当前 IP 已受信任: "),
+        myIPElem(),
+        gotoTrusted("(白名单)").addClass("ml-2"),
+    ],
+});
+const AddIP_Btn = cc("button", { text: "Trust" });
+const IP_Alerts = util.CreateAlerts();
+const IP_Area = cc("div", {
+    children: [
+        m("div").append("你的当前 IP 如下所示，点击 Trust 按钮可添加到", gotoTrusted(), "。通过", gotoTrusted(), "中的 IP 访问本站时，可使用 PIN 码登入。"),
+        m("div").append(myIPElem(), m(AddIP_Btn)
+            .addClass("ml-2")
+            .on("click", (e) => {
+            e.preventDefault();
+            util.ajax({
+                method: "POST",
+                url: "/api/add-trusted-ip",
+                alerts: IP_Alerts,
+                buttonID: AddIP_Btn.id,
+            }, () => {
+                IP_Alerts.insert("success", "添加信任 IP 成功");
+                IP_Area.elem().hide();
+            });
+        }), m(IP_Alerts)),
+    ],
+});
+$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(SignInForm).hide(), m(TrustedIP_Area).addClass("my-5").hide(), m(Alerts), m(SignOutArea).hide(), m(IP_Area).addClass("my-5").hide(), m(GotoChangePwd).hide());
 init();
 function init() {
     checkSignIn();
@@ -91,6 +129,7 @@ function checkSignIn() {
             Alerts.insert("info", "已登入");
             SignOutArea.elem().show();
             Loading.hide();
+            setMyIP();
         }
         else {
             checkDefaultPwd();
@@ -109,5 +148,16 @@ function checkDefaultPwd() {
         }
     }, undefined, () => {
         Loading.hide();
+    });
+}
+function setMyIP() {
+    util.ajax({ method: "GET", url: "/api/get-my-ip", alerts: Alerts }, (resp) => {
+        if (resp.Trusted) {
+            TrustedIP_Area.elem().show();
+        }
+        else {
+            IP_Area.elem().show();
+        }
+        $('.MyIP').text(resp.IP);
     });
 }

@@ -20,6 +20,13 @@ Just another password manager.
 mima.exe -addr 127.0.0.1:8080
 ```
 
-如果你有服务器，配合 Nginx 或 Caddy 如果架设一个真正的网站
-https://blog.carlmjohnson.net/post/2021/how-to-use-go-embed/
+## demo (在线演示)
 
+https://mimademo.ai42.xyz
+
+
+## 特点
+
+- **完整的历史记录**（不仅记录历史密码，甚至用户名与备注的每次修改都全部记录）
+- **神奇的标签功能**，利用标签可轻松实现多密码与分类，并可代替顶置（详见后文）
+- **首页无列表**（多数密码管理软件一打开就是网址与用户名列表，虽然通常密码隐藏，但有时网址与用户名也可能是隐私，需要防旁人窥视）

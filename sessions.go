@@ -20,6 +20,9 @@ const (
 
 var ipTryCount = make(map[string]int)
 
+var trustedIPs = make(map[string]bool)
+var PIN = "1234" // 简短密码，被记录在 trustedIPs 里的 IP 可用。
+
 func checkIPTryCount(ip string) error {
 	if *demo {
 		return nil // 演示版允许无限重试密码
@@ -30,13 +33,23 @@ func checkIPTryCount(ip string) error {
 	return nil
 }
 
-// checkPasswordAndIP 检查 IP 与密码，返回 true 表示需要结束函数。
+// checkPasswordAndIP 检查 IP 与密码，返回 true 表示有错误。
 func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
 	ip := c.ClientIP()
+
+	// 先检查是否超过尝试次数
 	if err := checkIPTryCount(ip); err != nil {
-		c.JSON(http.StatusTooManyRequests, Text{err.Error()})
+		c.JSON(http.StatusForbidden, Text{err.Error()})
 		return true
 	}
+
+	// 再验证 PIN, 如果正确就不需要检查主密码。
+	if trustedIPs[ip] && pwd == PIN {
+		ipTryCount[ip] = 0
+		return false
+	}
+
+	// 如果 PIN 不正确，再验证主密码。
 	yes, err := db.CheckPassword(pwd)
 	util.Panic(err)
 	if !yes {
@@ -45,6 +58,22 @@ func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
 		return true
 	}
 	ipTryCount[ip] = 0
+	return false
+}
+
+// checkPinAndIP 检查 IP 与 PIN 码，返回 true 表示有错误。
+func checkPinAndIP(c *gin.Context, pin string) (exit bool) {
+	ip := c.ClientIP()
+	if err := checkIPTryCount(ip); err != nil {
+		c.JSON(http.StatusForbidden, Text{err.Error()})
+		return true
+	}
+	if pin != PIN {
+		ipTryCount[ip]++
+		c.JSON(http.StatusUnauthorized, Text{"wrong password"})
+		return true
+	}
+	ipTryCount[ip] -= 1
 	return false
 }
 

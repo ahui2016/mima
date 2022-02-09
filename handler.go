@@ -61,6 +61,7 @@ func (e embedFileSystem) Exists(prefix string, path string) bool {
 }
 
 // https://github.com/gin-contrib/static/issues/19
+// https://blog.carlmjohnson.net/post/2021/how-to-use-go-embed/
 func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
 	fsys, err := fs.Sub(fsEmbed, targetPath)
 	util.Panic(err)
@@ -147,7 +148,6 @@ func changePwdHandler(c *gin.Context) {
 	if BindCheck(c, &form) {
 		return
 	}
-
 	if checkPasswordAndIP(c, form.CurrentPwd) {
 		return
 	}
@@ -274,4 +274,32 @@ func importHandler(c *gin.Context) {
 
 func downloadBackup(c *gin.Context) {
 	c.FileAttachment(db.Path, dbFileName)
+}
+
+func getMyIP(c *gin.Context) {
+	type IP_Trusted struct {
+		IP      string
+		Trusted bool
+	}
+	var ipTrusted IP_Trusted
+	ipTrusted.IP = c.ClientIP()
+	if trustedIPs[ipTrusted.IP] {
+		ipTrusted.Trusted = true
+	}
+	c.JSON(OK, ipTrusted)
+}
+
+func changePIN(c *gin.Context) {
+	type ChangePinForm struct {
+		CurrentPIN string `form:"oldpin" binding:"required"`
+		NewPIN     string `form:"newpin" binding:"required"`
+	}
+	var form ChangePinForm
+	if BindCheck(c, &form) {
+		return
+	}
+	if checkPinAndIP(c, form.CurrentPIN) {
+		return
+	}
+	PIN = form.NewPIN
 }
