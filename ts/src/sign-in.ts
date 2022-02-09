@@ -130,7 +130,7 @@ const IP_Area = cc("div", {
       gotoTrusted(),
       "。通过",
       gotoTrusted(),
-      "中的 IP 访问本站时，可使用 PIN 码登入。"
+      "中的 IP 访问时可使用 PIN 码登入。"
     ),
     m("div").append(
       myIPElem(),

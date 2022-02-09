@@ -84,7 +84,7 @@ function myIPElem() {
     return span("").addClass("MyIP");
 }
 function gotoTrusted(text = "白名单") {
-    return util.LinkElem("/public/change-pwd", {
+    return util.LinkElem("/public/change-pwd.html", {
         text: text,
         blank: true,
     });
@@ -100,7 +100,7 @@ const AddIP_Btn = cc("button", { text: "Trust" });
 const IP_Alerts = util.CreateAlerts();
 const IP_Area = cc("div", {
     children: [
-        m("div").append("你的当前 IP 如下所示，点击 Trust 按钮可添加到", gotoTrusted(), "。通过", gotoTrusted(), "中的 IP 访问本站时，可使用 PIN 码登入。"),
+        m("div").append("你的当前 IP 如下所示，点击 Trust 按钮可添加到", gotoTrusted(), "。通过", gotoTrusted(), "中的 IP 访问时可使用 PIN 码登入。"),
         m("div").append(myIPElem(), m(AddIP_Btn)
             .addClass("ml-2")
             .on("click", (e) => {
