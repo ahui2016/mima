@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"ahui2016.github.com/mima/model"
@@ -174,6 +175,10 @@ func addHandler(c *gin.Context) {
 func editHandler(c *gin.Context) {
 	var form model.EditMimaForm
 	c.Bind(&form)
+	if *demo && strings.ToUpper(form.ID) < "M1K68" {
+		c.JSON(500, Text{"演示版不可修改受保护条目"})
+		return
+	}
 	m := model.NewFromEdit(form)
 	checkErr(c, db.UpdateMima(m))
 }
@@ -237,12 +242,12 @@ func deleteHistory(c *gin.Context) {
 }
 
 func deleteMima(c *gin.Context) {
-	if *demo {
-		c.JSON(500, Text{"演示版不可使用删除功能"})
-		return
-	}
 	var form idForm
 	if BindCheck(c, &form) {
+		return
+	}
+	if *demo && strings.ToUpper(form.ID) < "M1K68" {
+		c.JSON(500, Text{"演示版不可删除受保护条目"})
 		return
 	}
 	checkErr(c, db.DeleteMima(form.ID))
