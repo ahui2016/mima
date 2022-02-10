@@ -117,7 +117,7 @@ function gotoTrusted(text = "白名单"): mjElement {
 
 const TrustedIP_Area = cc("div", {
   children: [
-    span("你的当前 IP 已受信任: "),
+    span("当前 IP 已受信任: "),
     myIPElem(),
     gotoTrusted("(受信任IP清单)").addClass("ml-2"),
   ],
@@ -129,7 +129,7 @@ const IP_Alerts = util.CreateAlerts();
 const IP_Area = cc("form", {
   children: [
     m("div").append(
-      "你的当前 IP 如下所示，输入 PIN 码并点击 Trust 按钮可添加到",
+      "当前 IP 如下所示，输入 PIN 码并点击 Trust 按钮可添加到",
       gotoTrusted(),
       "。通过白名单中的 IP 访问时可使用 PIN 码登入。"
     ),

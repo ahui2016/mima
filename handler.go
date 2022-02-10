@@ -146,6 +146,10 @@ type ChangePwdForm struct {
 }
 
 func changePwdHandler(c *gin.Context) {
+	if *demo {
+		c.JSON(500, Text{"演示版不可修改密码"})
+		return
+	}
 	var form ChangePwdForm
 	if BindCheck(c, &form) {
 		return
@@ -233,6 +237,10 @@ func deleteHistory(c *gin.Context) {
 }
 
 func deleteMima(c *gin.Context) {
+	if *demo {
+		c.JSON(500, Text{"演示版不可使用删除功能"})
+		return
+	}
 	var form idForm
 	if BindCheck(c, &form) {
 		return
@@ -253,6 +261,10 @@ func getPassword(c *gin.Context) {
 }
 
 func importHandler(c *gin.Context) {
+	if *demo {
+		c.JSON(500, Text{"演示版不可使用导入功能"})
+		return
+	}
 	f, err := c.FormFile("file")
 	if checkErr(c, err) {
 		return
@@ -313,6 +325,10 @@ func getTrustedIPs(c *gin.Context) {
 }
 
 func changePIN(c *gin.Context) {
+	if *demo {
+		c.JSON(500, Text{"演示版不可修改PIN码"})
+		return
+	}
 	var form ChangePwdForm
 	if BindCheck(c, &form) {
 		return

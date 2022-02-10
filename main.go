@@ -30,7 +30,10 @@ func main() {
 	if *debug {
 		r.Use(gin.Logger())
 	}
-	r.SetTrustedProxies(nil)
+
+	// 必须正确设置此项才能获取真实IP
+	r.SetTrustedProxies([]string{"127.0.0.1"})
+
 	sessionStore := cookie.NewStore(generateRandomKey())
 	r.Use(sessions.Sessions(sessionName, sessionStore))
 
