@@ -117,16 +117,17 @@ const TrustedIP_Area = cc("div", {
   children: [
     span("你的当前 IP 已受信任: "),
     myIPElem(),
-    gotoTrusted("(白名单)").addClass("ml-2"),
+    gotoTrusted("(受信任IP清单)").addClass("ml-2"),
   ],
 });
 
+const PinInput = util.create_input();
 const AddIP_Btn = cc("button", { text: "Trust" });
 const IP_Alerts = util.CreateAlerts();
 const IP_Area = cc("div", {
   children: [
     m("div").append(
-      "你的当前 IP 如下所示，点击 Trust 按钮可添加到",
+      "你的当前 IP 如下所示，输入 PIN 码并点击 Trust 按钮可添加到",
       gotoTrusted(),
       "。通过",
       gotoTrusted(),
@@ -134,6 +135,8 @@ const IP_Area = cc("div", {
     ),
     m("div").append(
       myIPElem(),
+      m('br'),
+      m(PinInput).attr({placeholder:'PIN'}),
       m(AddIP_Btn)
         .addClass("ml-2")
         .on("click", (e) => {
@@ -144,6 +147,7 @@ const IP_Area = cc("div", {
               url: "/api/add-trusted-ip",
               alerts: IP_Alerts,
               buttonID: AddIP_Btn.id,
+              body:{password:util.val(PinInput)}
             },
             () => {
               IP_Alerts.insert("success", "添加信任 IP 成功");
@@ -151,7 +155,6 @@ const IP_Area = cc("div", {
             }
           );
         }),
-      m(IP_Alerts)
     ),
   ],
 });
@@ -160,10 +163,11 @@ $("#root").append(
   m(NaviBar),
   m(Loading).addClass("my-3"),
   m(SignInForm).hide(),
-  m(TrustedIP_Area).addClass("my-5").hide(),
   m(Alerts),
-  m(SignOutArea).hide(),
+  m(TrustedIP_Area).addClass("my-5").hide(),
+  m(SignOutArea).addClass('my-5').hide(),
   m(IP_Area).addClass("my-5").hide(),
+  m(IP_Alerts),
   m(GotoChangePwd).hide()
 );
 

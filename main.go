@@ -82,12 +82,8 @@ func main() {
 		api.GET("/download-backup", downloadBackup)
 
 		api.GET("/get-my-ip", getMyIP)
-		api.POST("/add-trusted-ip", func(c *gin.Context) {
-			trustedIPs[c.ClientIP()] = true
-		})
-		api.GET("/get-trusted-ips", func(c *gin.Context) {
-			c.JSON(OK, trustedIPs)
-		})
+		api.POST("/add-trusted-ip", addTrustedIP)
+		api.GET("/get-trusted-ips", getTrustedIPs)
 		api.POST("/clear-trusted-ips", func(c *gin.Context) {
 			trustedIPs = make(map[string]bool)
 		})

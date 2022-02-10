@@ -70,7 +70,7 @@ func checkPinAndIP(c *gin.Context, pin string) (exit bool) {
 	}
 	if pin != PIN {
 		ipTryCount[ip]++
-		c.JSON(http.StatusUnauthorized, Text{"wrong password"})
+		c.JSON(http.StatusUnauthorized, Text{"PIN码错误（注意，每次后端重启都会恢复默认PIN码）"})
 		return true
 	}
 	ipTryCount[ip] -= 1

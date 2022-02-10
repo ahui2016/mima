@@ -1,3 +1,7 @@
+hr {
+  margin-top: 0;
+}
+
 .form-label {
   font-weight: bold;
   display: block;

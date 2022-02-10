@@ -9,15 +9,14 @@ const NaviBar = cc("div", {
   classes: "my-5",
   children: [
     util.LinkElem("/", { text: "mima" }),
-    span(" .. Change Master Password"),
+    span(" .. Change Password"),
   ],
 });
 
-const DefaultPwdNotes = cc("p", {
+const AboutDefaultPwd = cc("p", {
   text: "当前密码是 abc, 已自动填写当前密码，请输入新密码。",
   classes: "alert-info",
 });
-
 const CurrentPwd = cc("input", {
   attr: { autocomplete: "current-password" },
 });
@@ -29,6 +28,9 @@ const PwdAlerts = util.CreateAlerts();
 
 const Form = cc("form", {
   children: [
+    m("h4").text("Master Password (主密码)").addClass("mb-0"),
+    m("hr"),
+    m(AboutDefaultPwd).hide(),
     m("div").append(
       m("label").text("Current Password").attr({ for: CurrentPwd.raw_id }),
       m("br"),
@@ -60,7 +62,7 @@ const Form = cc("form", {
         },
         () => {
           Alerts.clear().insert("success", "已成功更改密码。");
-          DefaultPwdNotes.elem().hide();
+          AboutDefaultPwd.elem().hide();
           CurrentPwd.elem().val("");
           NewPwd.elem().val("");
           Form.elem().hide();
@@ -70,25 +72,17 @@ const Form = cc("form", {
   ],
 });
 
-const AboutPIN = cc("p", {
-  text: "PIN 码是指一个更简单的密码，通过受信任列表中的 IP 访问时可使用 PIN 码登入。你可在此更改 PIN 码 (默认: 1234)。",
-});
-
-const CurrentPIN = cc("input", {
-  attr: { autocomplete: "current-password" },
-});
-const NewPIN = cc("input", {
-  attr: { autocomplete: "new-password" },
-});
-const ChangePinBtn = cc("button", { text: "Change PIN" });
+const NewPIN = cc("input");
+const SetPinBtn = cc("button", { text: "Set PIN" });
 const PinAlerts = util.CreateAlerts();
 
 const PinForm = cc("form", {
   children: [
-    m("div").append(
-      m("label").text("Current PIN").attr({ for: CurrentPIN.raw_id }),
-      m("br"),
-      m(CurrentPIN)
+    m("h4").text("PIN 码").addClass("mb-0"),
+    m("hr"),
+    m("p").append(
+      "PIN 码是指一个更简单的密码，通过受信任列表中的 IP 访问时可使用 PIN 码登入。",
+      "你可在此设置 PIN 码。"
     ),
     m("div").append(
       m("label").text("New PIN").attr({ for: NewPIN.raw_id }),
@@ -96,59 +90,68 @@ const PinForm = cc("form", {
       m(NewPIN)
     ),
     m(PinAlerts),
-    m(ChangePinBtn).on("click", (event) => {
+    m(SetPinBtn).on("click", (event) => {
       event.preventDefault();
       const body = {
-        oldpwd: util.val(CurrentPIN),
+        oldpwd: '',
         newpwd: util.val(NewPIN),
       };
-      if (!body.oldpwd || !body.newpwd) {
-        PinAlerts.insert("danger", "当前PIN码与新PIN码都必须填写");
+      if (!body.newpwd) {
+        NewPIN.elem().trigger('focus');
         return;
       }
       util.ajax(
         {
           method: "POST",
-          url: "/auth/change-pin",
+          url: "/api/change-pin",
           alerts: PinAlerts,
-          buttonID: SubmitBtn.id,
+          buttonID: SetPinBtn.id,
           body: body,
         },
         () => {
-          Alerts.clear().insert("success", "已成功更改PIN码。");
-          AboutPIN.elem().hide();
-          CurrentPIN.elem().val("");
+          PinAlerts.clear().insert("success", "已成功更改PIN码。");
           NewPIN.elem().val("");
-          PinForm.elem().hide();
         }
       );
     }),
   ],
 });
 
+const IP_List = cc("ul");
+const ClearIP_Btn = cc("button", { text: "Clear" });
+const IP_ListArea = cc("div", {
+  children: [
+    m("h4").text("Trusted IPs (受信任IP清单)").addClass("mb-0"),
+    m("hr"),
+    m("div").text("受信任的 IP 可使用 PIN 码登入，点击 Clear 按钮可清空列表。"),
+    m(IP_List),
+    m(ClearIP_Btn),
+  ],
+});
+
 $("#root").append(
   m(NaviBar),
-  m(Loading).addClass('my-3'),
-  m(DefaultPwdNotes).hide(),
-  m(Form),
-  m(AboutPIN).addClass('mt-5'),
-  m(PinForm),
-  m(Alerts)
+  m(Loading).addClass("my-3"),
+  m(Alerts),
+  m(Form).addClass("my-5"),
+  m(PinForm).addClass("my-5").hide(),
+  m(IP_ListArea).addClass("my-5")
 );
 
 init();
 
 function init() {
   checkDefaultPwd();
+  checkSignIn();
 }
 
-function checkDefaultPwd() {
+function checkDefaultPwd(): void {
   util.ajax(
     { method: "GET", url: "/auth/is-default-pwd", alerts: Alerts },
     (resp) => {
       const yes = resp as boolean;
       if (yes) {
-        DefaultPwdNotes.elem().show();
+        AboutDefaultPwd.elem().show();
         CurrentPwd.elem().val("abc");
         util.focus(NewPwd);
       } else {
@@ -158,6 +161,41 @@ function checkDefaultPwd() {
     undefined,
     () => {
       Loading.hide();
+    }
+  );
+}
+
+function checkSignIn() {
+  util.ajax(
+    { method: "GET", url: "/auth/is-signed-in", alerts: Alerts },
+    (resp) => {
+      const yes = resp as boolean;
+      if (yes) {
+        PinForm.elem().show();
+        init_ip_list();
+      } else {
+        IP_List.elem().append(
+          m("li")
+            .text("Required Sign-in (登入后才能查看此项)")
+            .addClass("alert-info")
+        );
+      }
+    }
+  );
+}
+
+function init_ip_list(): void {
+  util.ajax(
+    { method: "GET", url: "/api/get-trusted-ips", alerts: Alerts },
+    (resp) => {
+      const ips = resp as string[];
+      if (ips && ips.length > 0) {
+        ips.forEach((ip) => {
+          IP_List.elem().append(m("li").text(ip));
+        });
+      } else {
+        IP_List.elem().append(m("li").text("未添加信任IP"));
+      }
     }
   );
 }

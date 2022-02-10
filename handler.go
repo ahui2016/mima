@@ -93,13 +93,14 @@ func JavaScriptHeader() gin.HandlerFunc {
 	}
 }
 
+type SignInForm struct {
+	Password string `form:"password" binding:"required"`
+}
+
 func signInHandler(c *gin.Context) {
 	if isSignedIn(c) {
 		c.Status(OK)
 		return
-	}
-	type SignInForm struct {
-		Password string `form:"password" binding:"required"`
 	}
 	var form SignInForm
 	if BindCheck(c, &form) {
@@ -139,11 +140,12 @@ func isDefaultPwd(c *gin.Context) {
 	c.JSON(OK, yes)
 }
 
+type ChangePwdForm struct {
+	CurrentPwd string `form:"oldpwd" binding:"required"`
+	NewPwd     string `form:"newpwd" binding:"required"`
+}
+
 func changePwdHandler(c *gin.Context) {
-	type ChangePwdForm struct {
-		CurrentPwd string `form:"oldpwd" binding:"required"`
-		NewPwd     string `form:"newpwd" binding:"required"`
-	}
 	var form ChangePwdForm
 	if BindCheck(c, &form) {
 		return
@@ -276,6 +278,17 @@ func downloadBackup(c *gin.Context) {
 	c.FileAttachment(db.Path, dbFileName)
 }
 
+func addTrustedIP(c *gin.Context) {
+	var form SignInForm
+	if BindCheck(c, &form) {
+		return
+	}
+	if checkPinAndIP(c, form.Password) {
+		return
+	}
+	trustedIPs[c.ClientIP()] = true
+}
+
 func getMyIP(c *gin.Context) {
 	type IP_Trusted struct {
 		IP      string
@@ -289,17 +302,20 @@ func getMyIP(c *gin.Context) {
 	c.JSON(OK, ipTrusted)
 }
 
-func changePIN(c *gin.Context) {
-	type ChangePinForm struct {
-		CurrentPIN string `form:"oldpin" binding:"required"`
-		NewPIN     string `form:"newpin" binding:"required"`
+func getTrustedIPs(c *gin.Context) {
+	var ipList []string
+	for k, v := range trustedIPs {
+		if v {
+			ipList = append(ipList, k)
+		}
 	}
-	var form ChangePinForm
+	c.JSON(OK, ipList)
+}
+
+func changePIN(c *gin.Context) {
+	var form ChangePwdForm
 	if BindCheck(c, &form) {
 		return
 	}
-	if checkPinAndIP(c, form.CurrentPIN) {
-		return
-	}
-	PIN = form.NewPIN
+	PIN = form.NewPwd
 }
