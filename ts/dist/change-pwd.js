@@ -5,10 +5,7 @@ const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
 const NaviBar = cc("div", {
     classes: "my-5",
-    children: [
-        util.LinkElem("/", { text: "mima" }),
-        span(" .. Change Password"),
-    ],
+    children: [util.LinkElem("/", { text: "mima" }), span(" .. Change Password")],
 });
 const AboutDefaultPwd = cc("p", {
     text: "当前密码是 abc, 已自动填写当前密码，请输入新密码。",
@@ -69,11 +66,11 @@ const PinForm = cc("form", {
         m(SetPinBtn).on("click", (event) => {
             event.preventDefault();
             const body = {
-                oldpwd: '******',
+                oldpwd: "******",
                 newpwd: util.val(NewPIN),
             };
             if (!body.newpwd) {
-                NewPIN.elem().trigger('focus');
+                NewPIN.elem().trigger("focus");
                 return;
             }
             util.ajax({
@@ -90,6 +87,7 @@ const PinForm = cc("form", {
     ],
 });
 const IP_List = cc("ul");
+const ClearIP_Alerts = util.CreateAlerts();
 const ClearIP_Btn = cc("button", { text: "Clear" });
 const IP_ListArea = cc("div", {
     children: [
@@ -97,10 +95,27 @@ const IP_ListArea = cc("div", {
         m("hr"),
         m("div").text("受信任的 IP 可使用 PIN 码登入，点击 Clear 按钮可清空列表。"),
         m(IP_List),
-        m(ClearIP_Btn),
+        m(ClearIP_Alerts),
+        m(ClearIP_Btn).on("click", (e) => {
+            e.preventDefault();
+            util.ajax({
+                method: "POST",
+                url: "/api/clear-trusted-ips",
+                alerts: ClearIP_Alerts,
+                buttonID: ClearIP_Btn.id,
+            }, () => {
+                IP_List.elem().html("");
+                ClearIP_Alerts.insert("success", "已清空");
+            });
+        }),
     ],
 });
-$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(Form).addClass("my-5"), m(PinForm).addClass("my-5").hide(), m(IP_ListArea).addClass("my-5"));
+const footerElem = m("div")
+    .addClass("Footer")
+    .append(util
+    .LinkElem("https://github.com/ahui2016/mima", { blank: true })
+    .addClass("FooterLink"));
+$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(Form).addClass("my-5"), m(PinForm).addClass("my-5").hide(), m(IP_ListArea).addClass("my-5"), footerElem);
 init();
 function init() {
     checkDefaultPwd();
@@ -129,9 +144,7 @@ function checkSignIn() {
             init_ip_list();
         }
         else {
-            IP_List.elem().append(m("li")
-                .text("Required Sign-in (登入后才能查看此项)")
-                .addClass("alert-info"));
+            ClearIP_Alerts.insert("info", "Required Sign-in (登入后才能查看此项)");
         }
     });
 }
@@ -144,7 +157,7 @@ function init_ip_list() {
             });
         }
         else {
-            IP_List.elem().append(m("li").text("未添加信任IP"));
+            ClearIP_Alerts.insert("info", "未添加信任IP");
         }
     });
 }

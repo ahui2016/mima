@@ -139,7 +139,7 @@ const IP_Area = cc("form", {
         m(PinInput)
           .attr({ placeholder: "PIN" })
           .addClass("ml-3")
-          .css({ width: "150px" }),
+          .css({ width: "100px" }),
         m(AddIP_Btn)
           .addClass("ml-1")
           .on("click", (e) => {
