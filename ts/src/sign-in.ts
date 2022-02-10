@@ -64,40 +64,42 @@ const SignInForm = cc("form", {
     m("div").append(
       m(UsernameInput).hide(),
       m(PwdInput).attr({ type: "password" }),
-      m(SubmitBtn).on("click", (event) => {
-        event.preventDefault();
-        const pwd = util.val(PwdInput);
-        if (!pwd) {
-          util.focus(PwdInput);
-          return;
-        }
-        util.ajax(
-          {
-            method: "POST",
-            url: "/auth/sign-in",
-            alerts: Alerts,
-            buttonID: SubmitBtn.id,
-            body: { password: pwd },
-          },
-          () => {
-            PwdInput.elem().val("");
-            SignInForm.elem().hide();
-            Alerts.clear().insert("success", "成功登入");
-            setMyIP();
-            SignOutArea.elem().show();
-          },
-          (that, errMsg) => {
-            if (that.status == 401) {
-              Alerts.insert("danger", "密码错误");
-            } else {
-              Alerts.insert("danger", errMsg);
-            }
-          },
-          () => {
+      m(SubmitBtn)
+        .addClass("ml-1")
+        .on("click", (event) => {
+          event.preventDefault();
+          const pwd = util.val(PwdInput);
+          if (!pwd) {
             util.focus(PwdInput);
+            return;
           }
-        );
-      })
+          util.ajax(
+            {
+              method: "POST",
+              url: "/auth/sign-in",
+              alerts: Alerts,
+              buttonID: SubmitBtn.id,
+              body: { password: pwd },
+            },
+            () => {
+              PwdInput.elem().val("");
+              SignInForm.elem().hide();
+              Alerts.clear().insert("success", "成功登入");
+              setMyIP();
+              SignOutArea.elem().show();
+            },
+            (that, errMsg) => {
+              if (that.status == 401) {
+                Alerts.insert("danger", "密码错误");
+              } else {
+                Alerts.insert("danger", errMsg);
+              }
+            },
+            () => {
+              util.focus(PwdInput);
+            }
+          );
+        })
     ),
   ],
 });
@@ -121,41 +123,49 @@ const TrustedIP_Area = cc("div", {
   ],
 });
 
-const PinInput = util.create_input();
+const PinInput = util.create_input('password');
 const AddIP_Btn = cc("button", { text: "Trust" });
 const IP_Alerts = util.CreateAlerts();
-const IP_Area = cc("div", {
+const IP_Area = cc("form", {
   children: [
     m("div").append(
       "你的当前 IP 如下所示，输入 PIN 码并点击 Trust 按钮可添加到",
       gotoTrusted(),
-      "。通过",
-      gotoTrusted(),
-      "中的 IP 访问时可使用 PIN 码登入。"
+      "。通过白名单中的 IP 访问时可使用 PIN 码登入。"
     ),
-    m("div").append(
-      myIPElem(),
-      m('br'),
-      m(PinInput).attr({placeholder:'PIN'}),
-      m(AddIP_Btn)
-        .addClass("ml-2")
-        .on("click", (e) => {
-          e.preventDefault();
-          util.ajax(
-            {
-              method: "POST",
-              url: "/api/add-trusted-ip",
-              alerts: IP_Alerts,
-              buttonID: AddIP_Btn.id,
-              body:{password:util.val(PinInput)}
-            },
-            () => {
-              IP_Alerts.insert("success", "添加信任 IP 成功");
-              IP_Area.elem().hide();
+    m("div")
+      .append(
+        myIPElem(),
+        m(PinInput)
+          .attr({ placeholder: "PIN" })
+          .addClass("ml-3")
+          .css({ width: "150px" }),
+        m(AddIP_Btn)
+          .addClass("ml-1")
+          .on("click", (e) => {
+            e.preventDefault();
+            const pin = util.val(PinInput);
+            if (!pin) {
+              IP_Alerts.insert("info", "请输入PIN码");
+              PinInput.elem().trigger('focus');
+              return;
             }
-          );
-        }),
-    ),
+            util.ajax(
+              {
+                method: "POST",
+                url: "/api/add-trusted-ip",
+                alerts: IP_Alerts,
+                buttonID: AddIP_Btn.id,
+                body: { password: pin },
+              },
+              () => {
+                IP_Alerts.clear().insert("success", "添加信任 IP 成功");
+                IP_Area.elem().hide();
+              }
+            );
+          })
+      )
+      .addClass("mt-2"),
   ],
 });
 
@@ -165,8 +175,8 @@ $("#root").append(
   m(SignInForm).hide(),
   m(Alerts),
   m(TrustedIP_Area).addClass("my-5").hide(),
-  m(SignOutArea).addClass('my-5').hide(),
-  m(IP_Area).addClass("my-5").hide(),
+  m(SignOutArea).addClass("my-5").hide(),
+  m(IP_Area).addClass("mt-5").hide(),
   m(IP_Alerts),
   m(GotoChangePwd).hide()
 );
@@ -221,8 +231,9 @@ function setMyIP() {
         TrustedIP_Area.elem().show();
       } else {
         IP_Area.elem().show();
+        util.focus(PinInput);
       }
-      $('.MyIP').text(resp.IP);
+      $(".MyIP").text(resp.IP);
     }
   );
 }

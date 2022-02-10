@@ -56,41 +56,34 @@ const Form = cc("form", {
         }),
     ],
 });
-const CurrentPIN = cc("input", {
-    attr: { autocomplete: "current-password" },
-});
-const NewPIN = cc("input", {
-    attr: { autocomplete: "new-password" },
-});
-const ChangePinBtn = cc("button", { text: "Change PIN" });
+const NewPIN = cc("input");
+const SetPinBtn = cc("button", { text: "Set PIN" });
 const PinAlerts = util.CreateAlerts();
 const PinForm = cc("form", {
     children: [
         m("h4").text("PIN 码").addClass("mb-0"),
         m("hr"),
-        m("p").append("PIN 码是指一个更简单的密码，通过受信任列表中的 IP 访问时可使用 PIN 码登入。", "你可在此更改 PIN 码 (默认: 1234, 请注意每次后端重启都会恢复默认 PIN 码)"),
-        m("div").append(m("label").text("Current PIN").attr({ for: CurrentPIN.raw_id }), m("br"), m(CurrentPIN)),
+        m("p").append("PIN 码是指一个更简单的密码，通过受信任列表中的 IP 访问时可使用 PIN 码登入。", "你可在此设置 PIN 码（如未设置则默认为'1234'）。"),
         m("div").append(m("label").text("New PIN").attr({ for: NewPIN.raw_id }), m("br"), m(NewPIN)),
         m(PinAlerts),
-        m(ChangePinBtn).on("click", (event) => {
+        m(SetPinBtn).on("click", (event) => {
             event.preventDefault();
             const body = {
-                oldpwd: util.val(CurrentPIN),
+                oldpwd: '******',
                 newpwd: util.val(NewPIN),
             };
-            if (!body.oldpwd || !body.newpwd) {
-                PinAlerts.insert("danger", "当前PIN码与新PIN码都必须填写");
+            if (!body.newpwd) {
+                NewPIN.elem().trigger('focus');
                 return;
             }
             util.ajax({
                 method: "POST",
                 url: "/api/change-pin",
                 alerts: PinAlerts,
-                buttonID: ChangePinBtn.id,
+                buttonID: SetPinBtn.id,
                 body: body,
             }, () => {
                 PinAlerts.clear().insert("success", "已成功更改PIN码。");
-                CurrentPIN.elem().val("");
                 NewPIN.elem().val("");
             });
         }),

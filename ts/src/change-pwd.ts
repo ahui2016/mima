@@ -82,7 +82,7 @@ const PinForm = cc("form", {
     m("hr"),
     m("p").append(
       "PIN 码是指一个更简单的密码，通过受信任列表中的 IP 访问时可使用 PIN 码登入。",
-      "你可在此设置 PIN 码。"
+      "你可在此设置 PIN 码（如未设置则默认为'1234'）。"
     ),
     m("div").append(
       m("label").text("New PIN").attr({ for: NewPIN.raw_id }),
@@ -93,7 +93,7 @@ const PinForm = cc("form", {
     m(SetPinBtn).on("click", (event) => {
       event.preventDefault();
       const body = {
-        oldpwd: '',
+        oldpwd: '******',
         newpwd: util.val(NewPIN),
       };
       if (!body.newpwd) {
