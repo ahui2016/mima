@@ -32,7 +32,7 @@ export function MimaItem(mima: util.Mima): mjComponent {
     if (mima.Username) {
       details.append(
         span("username: ").addClass("text-grey"),
-        mima.Username,
+        span(mima.Username),
         util.LinkElem("#", { text: "(cp)" }).on("click", (e) => {
           e.preventDefault();
           copyToClipboard(mima.Username);

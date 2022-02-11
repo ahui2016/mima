@@ -25,7 +25,7 @@ export function MimaItem(mima) {
         }
         const details = self.elem().find(".UsernamePassword");
         if (mima.Username) {
-            details.append(span("username: ").addClass("text-grey"), mima.Username, util.LinkElem("#", { text: "(cp)" }).on("click", (e) => {
+            details.append(span("username: ").addClass("text-grey"), span(mima.Username), util.LinkElem("#", { text: "(cp)" }).on("click", (e) => {
                 e.preventDefault();
                 copyToClipboard(mima.Username);
                 ItemAlerts.insert("success", "复制用户名 成功");

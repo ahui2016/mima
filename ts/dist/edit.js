@@ -156,15 +156,15 @@ function HistoryItem(h) {
     self.init = () => {
         const details = self.elem().find(".UsernamePassword");
         if (h.Username) {
-            details.append(span("username: ").addClass("text-grey"), h.Username);
+            details.append(span("username: ").addClass("text-grey"), span(h.Username));
         }
         if (h.Password) {
-            details.append(span("password: ").addClass("text-grey ml-2"), h.Password);
+            details.append(span("password: ").addClass("text-grey ml-2"), span(h.Password));
         }
         if (h.Notes) {
             self
                 .elem()
-                .append(m("div").append(span("Notes: ").addClass("text-grey"), h.Notes));
+                .append(m("div").append(span("Notes: ").addClass("text-grey"), span(h.Notes)));
         }
     };
     return self;
