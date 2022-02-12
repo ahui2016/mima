@@ -3,6 +3,7 @@ import { m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 const NaviBar = cc("div", {
     classes: "my-5",
     children: [
@@ -132,7 +133,7 @@ const IP_Area = cc("form", {
             .addClass("mt-2"),
     ],
 });
-$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(SignInForm).hide(), m(Alerts), m(TrustedIP_Area).addClass("my-5").hide(), m(SignOutArea).addClass("my-5").hide(), m(IP_Area).addClass("mt-5").hide(), m(IP_Alerts), m(GotoChangePwd).hide());
+$("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(SignInForm).hide(), m(Alerts), m(TrustedIP_Area).addClass("my-5").hide(), m(SignOutArea).addClass("my-5").hide(), m(IP_Area).addClass("mt-5").hide(), m(IP_Alerts), m(GotoChangePwd).hide(), footerElem.hide());
 init();
 function init() {
     checkSignIn();
@@ -175,5 +176,6 @@ function setMyIP() {
             util.focus(PinInput);
         }
         $(".MyIP").text(resp.IP);
+        footerElem.show();
     });
 }

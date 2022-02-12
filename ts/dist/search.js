@@ -5,6 +5,7 @@ import { MimaItem } from "./mima-item.js";
 var searchMode = "LabelOnly";
 const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 const GotoSignOut = cc("a", {
     text: "Sign-out",
     attr: { href: "/public/sign-in.html" },
@@ -69,11 +70,6 @@ const SearchForm = cc("form", {
     ],
 });
 const MimaList = cc("div");
-const footerElem = m("div")
-    .addClass("Footer")
-    .append(util
-    .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-    .addClass("FooterLink"));
 const TextForCopy = cc("input", { id: "TextForCopy" });
 $("#root").append(m(NaviBar).addClass("my-3"), m(Loading).addClass("my-3"), m(SearchForm).hide(), m(Alerts), m(GotoSignIn).hide(), m(MimaList).addClass("mt-3"), footerElem.hide(), m(TextForCopy).hide());
 init();

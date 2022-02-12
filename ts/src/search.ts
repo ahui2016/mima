@@ -7,6 +7,7 @@ var searchMode: "LabelOnly" | "LabelAndTitle" = "LabelOnly";
 
 const Alerts = util.CreateAlerts(4);
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 
 const GotoSignOut = cc("a", {
   text: "Sign-out",
@@ -83,14 +84,6 @@ const SearchForm = cc("form", {
 });
 
 const MimaList = cc("div");
-
-const footerElem = m("div")
-  .addClass("Footer")
-  .append(
-    util
-      .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-      .addClass("FooterLink")
-  );
 
 const TextForCopy = cc("input", { id: "TextForCopy" });
 

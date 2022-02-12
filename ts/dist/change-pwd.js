@@ -3,6 +3,7 @@ import { m, cc, span } from "./mj.js";
 import * as util from "./util.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
+const footerElem = util.CreateFooter();
 const NaviBar = cc("div", {
     classes: "my-5",
     children: [util.LinkElem("/", { text: "mima" }), span(" .. Change Password")],
@@ -110,11 +111,6 @@ const IP_ListArea = cc("div", {
         }),
     ],
 });
-const footerElem = m("div")
-    .addClass("Footer")
-    .append(util
-    .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-    .addClass("FooterLink"));
 $("#root").append(m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(Form).addClass("my-5"), m(PinForm).addClass("my-5").hide(), m(IP_ListArea).addClass("my-5"), footerElem);
 init();
 function init() {

@@ -38,7 +38,7 @@ export interface MimaWithHistory {
   Notes: string;
   CTime: number; // 创建日期
   MTime: number; // 修改日期
-  History: History[]
+  History: History[];
 }
 
 // 获取地址栏的参数。
@@ -292,7 +292,7 @@ export function focus(obj: mjElement | mjComponent): void {
   }, 300);
 }
 
-/** 
+/**
  * 如果 id 以数字开头，就需要使用 itemID 给它改成以字母开头。
  */
 export function itemID(id: string): string {
@@ -328,7 +328,7 @@ export function create_item(
   classes = "mb-3"
 ): mjElement {
   var descElem: mjElement;
-  if (typeof description == 'string') {
+  if (typeof description == "string") {
     descElem = m("div").addClass("form-text").text(description);
   } else {
     descElem = description;
@@ -387,4 +387,16 @@ export function CreateGotoSignIn() {
       m("div").append("前往登入页面 ➡ ", LinkElem("/public/sign-in.html")),
     ],
   });
+}
+
+export function CreateFooter(): mjElement {
+  return m("div")
+    .addClass("Footer")
+    .append(
+      span("version: 2022-02-12"),
+      m("br"),
+      LinkElem("https://github.com/ahui2016/mima", { blank: true }).addClass(
+        "FooterLink"
+      )
+    );
 }

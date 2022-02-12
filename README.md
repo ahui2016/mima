@@ -20,6 +20,14 @@ Just another password manager.
 mima.exe -addr 127.0.0.1:8080
 ```
 
+### 数据库 (sqlite)
+
+本软件采用 sqlite, 默认保存在 [os.UserConfigDir](https://pkg.go.dev/os#UserConfigDir), 可使用参数 `-db` 指定数据库的文件夹，例如：
+
+```sh
+mima -db ../mima-db-folder
+```
+
 ## demo (在线演示)
 
 https://mimademo.ai42.xyz (密码:abc)

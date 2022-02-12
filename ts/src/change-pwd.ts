@@ -4,6 +4,7 @@ import * as util from "./util.js";
 
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading();
+const footerElem = util.CreateFooter();
 
 const NaviBar = cc("div", {
   classes: "my-5",
@@ -141,14 +142,6 @@ const IP_ListArea = cc("div", {
     }),
   ],
 });
-
-const footerElem = m("div")
-  .addClass("Footer")
-  .append(
-    util
-      .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-      .addClass("FooterLink")
-  );
 
 $("#root").append(
   m(NaviBar),

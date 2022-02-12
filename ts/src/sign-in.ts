@@ -4,6 +4,7 @@ import * as util from "./util.js";
 
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 
 const NaviBar = cc("div", {
   classes: "my-5",
@@ -178,7 +179,8 @@ $("#root").append(
   m(SignOutArea).addClass("my-5").hide(),
   m(IP_Area).addClass("mt-5").hide(),
   m(IP_Alerts),
-  m(GotoChangePwd).hide()
+  m(GotoChangePwd).hide(),
+  footerElem.hide()
 );
 
 init();
@@ -234,6 +236,7 @@ function setMyIP() {
         util.focus(PinInput);
       }
       $(".MyIP").text(resp.IP);
+      footerElem.show();
     }
   );
 }

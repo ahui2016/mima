@@ -4,6 +4,7 @@ import * as util from "./util.js";
 import { MimaItem } from "./mima-item.js";
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
 const NaviBar = cc("div", {
     classes: "text-right",
@@ -16,11 +17,6 @@ const NaviBar = cc("div", {
 const GotoSignIn = util.CreateGotoSignIn();
 const MimaList = cc("div");
 const TextForCopy = cc("input", { id: "TextForCopy" });
-const footerElem = m("div")
-    .addClass("Footer")
-    .append(util
-    .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-    .addClass("FooterLink"));
 $("#root").append(titleArea, m(NaviBar), m(Loading).addClass("my-3"), m(Alerts), m(GotoSignIn).addClass("my-3").hide(), m(MimaList).addClass("mt-3"), footerElem.hide(), m(TextForCopy).hide());
 init();
 function init() {

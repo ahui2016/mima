@@ -233,7 +233,7 @@ export function create_input(type = "text") {
 }
 export function create_item(comp, name, description, classes = "mb-3") {
     var descElem;
-    if (typeof description == 'string') {
+    if (typeof description == "string") {
         descElem = m("div").addClass("form-text").text(description);
     }
     else {
@@ -273,4 +273,9 @@ export function CreateGotoSignIn() {
             m("div").append("前往登入页面 ➡ ", LinkElem("/public/sign-in.html")),
         ],
     });
+}
+export function CreateFooter() {
+    return m("div")
+        .addClass("Footer")
+        .append(span("version: 2022-02-12"), m("br"), LinkElem("https://github.com/ahui2016/mima", { blank: true }).addClass("FooterLink"));
 }

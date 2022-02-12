@@ -5,6 +5,7 @@ import { MimaItem } from "./mima-item.js";
 
 const Alerts = util.CreateAlerts();
 const Loading = util.CreateLoading("center");
+const footerElem = util.CreateFooter();
 
 const titleArea = m("div").addClass("text-center").append(m("h1").text("mima"));
 
@@ -22,14 +23,6 @@ const GotoSignIn = util.CreateGotoSignIn();
 const MimaList = cc("div");
 
 const TextForCopy = cc("input", { id: "TextForCopy" });
-
-const footerElem = m("div")
-  .addClass("Footer")
-  .append(
-    util
-      .LinkElem("https://github.com/ahui2016/mima", { blank: true })
-      .addClass("FooterLink")
-  );
 
 $("#root").append(
   titleArea,
