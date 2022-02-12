@@ -12,7 +12,6 @@ import (
 const (
 	mima_id_key    = "mima-id-key"
 	mima_id_prefix = "M"
-	app_addr_key   = "app-local-ip"
 	settings_key   = "settings-key"
 )
 
