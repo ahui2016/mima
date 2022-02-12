@@ -22,7 +22,7 @@ mima.exe -addr 127.0.0.1:8080
 
 ### 数据库 (sqlite)
 
-本软件采用 sqlite, 默认保存在 [os.UserConfigDir](https://pkg.go.dev/os#UserConfigDir), 可使用参数 `-db` 指定数据库的文件夹，例如：
+本软件采用 sqlite, 默认保存在 [os.UserConfigDir](https://pkg.go.dev/os#UserConfigDir), 可使用参数 `-db` 指定数据库的文件夹(必须是一个已存在的文件夹)，例如:
 
 ```sh
 mima -db ../mima-db-folder
@@ -89,3 +89,11 @@ mima.exe -debug
 用户可免费使用本软件, 可自行审查本软件的源代码，但万一有什么泄密、删除数据、
 造成直接或间接损失等, 我一概不负责任。
 （使用别的任何密码管理软件, 即使是收费的, 他们也一样不会负责用户的损失.）
+
+## 备忘
+
+使用 gox 跨平台交叉编译时，由于本软件使用的 sqlite3 依赖 cgo, 因此需要添加 '-cgo' 参数，例如：
+
+```sh
+gox -osarch="darwin/arm64" -cgo -tags=nomsgpack
+```
