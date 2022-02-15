@@ -117,15 +117,13 @@ func signInHandler(c *gin.Context) {
 		return
 	}
 
-	options := newNormalOptions()
 	session := sessions.Default(c)
-	checkErr(c, sessionSet(session, true, options))
+	checkErr(c, sessionSet(session, true, newNormalOptions()))
 }
 
 func signOutHandler(c *gin.Context) {
-	options := newExpireOptions()
 	session := sessions.Default(c)
-	checkErr(c, sessionSet(session, false, options))
+	checkErr(c, sessionSet(session, false, newExpireOptions()))
 }
 
 func isDefaultPwd(c *gin.Context) {
