@@ -82,13 +82,14 @@ const SignInForm = cc("form", {
               buttonID: SubmitBtn.id,
               body: { password: pwd },
             },
+            // success
             () => {
-              PwdInput.elem().val("");
               SignInForm.elem().hide();
               Alerts.clear().insert("success", "成功登入");
               setMyIP();
               SignOutArea.elem().show();
             },
+            // fail
             (that, errMsg) => {
               if (that.status == 401) {
                 Alerts.insert("danger", "密码错误");
@@ -96,7 +97,9 @@ const SignInForm = cc("form", {
                 Alerts.insert("danger", errMsg);
               }
             },
+            // always
             () => {
+              PwdInput.elem().val("");
               util.focus(PwdInput);
             }
           );
@@ -161,6 +164,7 @@ const IP_Area = cc("form", {
               },
               () => {
                 IP_Alerts.clear().insert("success", "添加信任 IP 成功");
+                PinInput.elem().val('');
                 IP_Area.elem().hide();
               }
             );
