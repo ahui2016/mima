@@ -25,6 +25,7 @@ const UsernameInput = util.create_input();
 const PasswordInput = util.create_input();
 const NotesInput = util.create_textarea();
 const FormAlerts = util.CreateAlerts();
+const HiddenBtn = cc("button", { id: "submit", text: "submit" }); // 这个按钮是隐藏不用的，为了防止按回车键提交表单
 const SubmitBtn = cc("button", { text: "Submit" });
 const DelBtn = cc("a", {
   attr: { href: "#" },
@@ -45,6 +46,12 @@ const Form = cc("form", {
     create_color_pwd(PasswordInput),
     util.create_item(NotesInput, "Notes", ""),
     m(FormAlerts),
+    m(HiddenBtn)
+      .hide()
+      .on("click", (e) => {
+        e.preventDefault();
+        return false; // 这个按钮是隐藏不用的，为了防止按回车键提交表单。
+      }),
     m(SubmitBtn).on("click", (event) => {
       event.preventDefault();
       const title = util.val(TitleInput, "trim");
@@ -119,7 +126,7 @@ $("#root").append(
   m(Alerts).addClass("my-3"),
   m(Form).hide(),
   m(HistoryArea).addClass("my-5").hide(),
-  m('div').text('.').addClass('Footer'),
+  m("div").text(".").addClass("Footer")
 );
 
 init();
@@ -189,14 +196,14 @@ function HistoryItem(h: util.History): mjComponent {
                 {
                   method: "POST",
                   url: "/api/delete-history",
-                  alerts:HistoryAlerts,
+                  alerts: HistoryAlerts,
                   buttonID: delBtnID,
                   body: body,
                 },
                 () => {
                   $(delBtnID).hide();
-                  HistoryAlerts.insert('danger',"已彻底删除，不可恢复。");
-                },
+                  HistoryAlerts.insert("danger", "已彻底删除，不可恢复。");
+                }
               );
             })
         ),
@@ -208,10 +215,16 @@ function HistoryItem(h: util.History): mjComponent {
   self.init = () => {
     const details = self.elem().find(".UsernamePassword");
     if (h.Username) {
-      details.append(span("username: ").addClass("text-grey"), span(h.Username));
+      details.append(
+        span("username: ").addClass("text-grey"),
+        span(h.Username)
+      );
     }
     if (h.Password) {
-      details.append(span("password: ").addClass("text-grey ml-2"), span(h.Password));
+      details.append(
+        span("password: ").addClass("text-grey ml-2"),
+        span(h.Password)
+      );
     }
     if (h.Notes) {
       self
