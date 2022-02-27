@@ -15,12 +15,8 @@ const AboutDefaultPwd = cc("p", {
   text: "当前密码是 abc, 已自动填写当前密码，请输入新密码。",
   classes: "alert-info",
 });
-const CurrentPwd = cc("input", {
-  attr: { autocomplete: "current-password" },
-});
-const NewPwd = cc("input", {
-  attr: { autocomplete: "new-password" },
-});
+const CurrentPwd = util.create_input("password");
+const NewPwd = util.create_input();
 const SubmitBtn = cc("button", { text: "Change Password" });
 const PwdAlerts = util.CreateAlerts();
 
@@ -29,16 +25,12 @@ const Form = cc("form", {
     m("h4").text("Master Password (主密码)").addClass("mb-0"),
     m("hr"),
     m(AboutDefaultPwd).hide(),
-    m("div").append(
-      m("label").text("Current Password").attr({ for: CurrentPwd.raw_id }),
-      m("br"),
-      m(CurrentPwd)
-    ),
-    m("div").append(
-      m("label").text("New Password").attr({ for: NewPwd.raw_id }),
-      m("br"),
-      m(NewPwd)
-    ),
+    util
+      .create_item(CurrentPwd, "Current Password", "")
+      .attr({ autocomplete: "current-password" }),
+    util
+      .create_item(NewPwd, "New Password", "")
+      .attr({ autocomplete: "new-password" }),
     m(PwdAlerts),
     m(SubmitBtn).on("click", (event) => {
       event.preventDefault();

@@ -17,7 +17,7 @@ func WrapErrors(allErrors ...error) (wrapped error) {
 			if wrapped == nil {
 				wrapped = err
 			} else {
-				wrapped = fmt.Errorf("%v | %v", err, wrapped)
+				wrapped = fmt.Errorf("%s | %w", wrapped, err)
 			}
 		}
 	}
@@ -26,6 +26,7 @@ func WrapErrors(allErrors ...error) (wrapped error) {
 
 // ErrorContains returns NoCaseContains(err.Error(), substr)
 // Returns false if err is nil.
+// 一般使用 errors.Is, 不使用本函数。比较复杂的情况才使用本函数。
 func ErrorContains(err error, substr string) bool {
 	if err == nil {
 		return false

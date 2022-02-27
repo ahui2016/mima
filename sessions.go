@@ -14,6 +14,7 @@ const (
 	sessionName    = "mima-session"
 	cookieSignIn   = "mima-cookie-signin"
 	passwordMaxTry = 5
+	allIP_MaxTry   = 100 // 所有 IP 地址的最大尝试次数
 	minute         = 60
 	defaultMaxAge  = 30 * minute
 )
@@ -27,7 +28,7 @@ func checkIPTryCount(ip string) error {
 	if *demo {
 		return nil // 演示版允许无限重试密码
 	}
-	if ipTryCount[ip] >= passwordMaxTry {
+	if ipTryCount[ip] >= passwordMaxTry || ipTryCount["all"] >= allIP_MaxTry {
 		return fmt.Errorf("no more try, input wrong password too many times")
 	}
 	return nil
@@ -54,6 +55,7 @@ func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
 	util.Panic(err)
 	if !yes {
 		ipTryCount[ip]++
+		ipTryCount["all"]++
 		c.JSON(http.StatusUnauthorized, Text{"wrong password"})
 		return true
 	}
@@ -70,6 +72,7 @@ func checkPinAndIP(c *gin.Context, pin string) (exit bool) {
 	}
 	if pin != PIN {
 		ipTryCount[ip]++
+		ipTryCount["all"]++
 		c.JSON(http.StatusUnauthorized, Text{"PIN码错误（注意，每次后端重启都会恢复默认PIN码）"})
 		return true
 	}

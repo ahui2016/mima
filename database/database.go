@@ -235,7 +235,7 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) error {
 		return fmt.Errorf("cannot set password to '%s'", defaultPassword)
 	}
 	if newPwd == oldPwd {
-		return fmt.Errorf("the new password is equal to the current password")
+		return fmt.Errorf("the two passwords are the same")
 	}
 
 	// Get the first sealed mima.

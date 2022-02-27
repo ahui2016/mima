@@ -25,7 +25,8 @@ mima.exe -addr 127.0.0.1:8080
 本软件采用 sqlite, 默认保存在 [os.UserConfigDir](https://pkg.go.dev/os#UserConfigDir), 可使用参数 `-db` 指定数据库的文件夹(必须是一个已存在的文件夹)，例如:
 
 ```sh
-mima -db ../mima-db-folder
+$ mkdir mima-db-folder
+$ mima -db ./mima-db-folder
 ```
 
 ## demo (在线演示)
