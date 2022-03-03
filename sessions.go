@@ -54,8 +54,11 @@ func checkPasswordAndIP(c *gin.Context, pwd string) (exit bool) {
 	yes, err := db.CheckPassword(pwd)
 	util.Panic(err)
 	if !yes {
+		if pwd != PIN {
+			// 如果 PIN 正确，只是 IP 不信任，总错误次数就不自增。
+			ipTryCount["all"]++
+		}
 		ipTryCount[ip]++
-		ipTryCount["all"]++
 		c.JSON(http.StatusUnauthorized, Text{"wrong password"})
 		return true
 	}
