@@ -161,7 +161,9 @@ func changePwdHandler(c *gin.Context) {
 
 func addHandler(c *gin.Context) {
 	var form model.AddMimaForm
-	c.Bind(&form)
+	if BindCheck(c, &form) {
+		return
+	}
 	m := model.NewFromAdd(form)
 	id, err := db.SealedInsert(m)
 	if checkErr(c, err) {
@@ -172,7 +174,9 @@ func addHandler(c *gin.Context) {
 
 func editHandler(c *gin.Context) {
 	var form model.EditMimaForm
-	c.Bind(&form)
+	if BindCheck(c, &form) {
+		return
+	}
 	if *demo && strings.ToUpper(form.ID) < "M1K68" {
 		c.JSON(500, Text{"演示版不可修改受保护条目"})
 		return
