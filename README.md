@@ -31,7 +31,7 @@ $ mima -db ./mima-db-folder
 
 ## demo (在线演示)
 
-https://mimademo.ai42.xyz (密码:abc)
+https://mimademo.ai42.cc (密码:abc)
 
 
 ## 特点
