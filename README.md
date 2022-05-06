@@ -51,8 +51,6 @@ https://mimademo.ai42.cc (密码:abc)
 
 本软件的前身是 https://github.com/ahui2016/mima-web
 
-mima-web 也有在线演示 https://mimaweb.ai42.xyz (密码:abc) 
-
 我没有在原项目做版本升级，而是新开一个项目，是因为不仅有很多升级的地方，同时也有很多**降级**的地方，导致两个软件差别有点大。（旧版数据可导入新版）
 
 以下把本项目称为“新版”，把 mima-web 称为“旧版”。
